@@ -1,6 +1,5 @@
 package users;
 
-import javax.lang.model.util.Types;
 import java.util.List;
 
 public class Manager extends User {

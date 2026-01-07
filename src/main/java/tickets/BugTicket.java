@@ -67,7 +67,6 @@ public class BugTicket extends Ticket {
 			return this;
 		}
 
-
 		// asta efectiv construieste obiectul meu
 		public BugTicket build() {
 			return new BugTicket(this);

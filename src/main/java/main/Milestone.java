@@ -1,5 +1,7 @@
 package main;
 
+import forNotifications.Observer;
+import forNotifications.Subject;
 import tickets.Ticket;
 
 import java.time.LocalDate;
@@ -8,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Milestone {
+public class Milestone implements Subject {
     // campurile(toate necesare)
     private String name;
     private List<String> blockingFor;
@@ -26,6 +28,9 @@ public class Milestone {
     private List<Integer> openTickets;
     private List<Integer> closedTickets;
     private double completitionPercentage;
+
+    // pt notif
+    private List<Observer> assigDev = new ArrayList<>();
 
     public Milestone(String name, LocalDate dueDate, List<String> blockingFor,
              List<String> assignedDevs, List<Integer> tickets, String createdAt, String creatorName) {
@@ -137,7 +142,6 @@ public class Milestone {
             return daysUntilDue;
         }
         this.daysUntilDue = (int) ChronoUnit.DAYS.between(LocalDate.parse(currentTime), dueDate) + 1;
-
         if (daysUntilDue <= 0) {
             // s a terminat perioada de rezolvare
             overdueBy = (int) ChronoUnit.DAYS.between(dueDate, LocalDate.parse(currentTime)) + 1;
@@ -170,8 +174,41 @@ public class Milestone {
         }
     }
 
-    public static void updateMilestones(List<Milestone> allMilestones, String timestamp,  Map<Integer, Ticket> allTickets, String comm) {
-        for(Milestone m : allMilestones) {
+    @Override
+    public void addObserver(Observer o) {
+        assigDev.add(o);
+    }
+
+    @Override
+    public void removeObserver(Observer o) {
+        assigDev.remove(o);
+    }
+
+    @Override
+    public void notifyObservers(String message) {
+        for (Observer o : assigDev) {
+            o.update(message);
+        }
+    }
+
+    public static void updateMilestones(Map<String, Milestone> allMilestones, String timestamp,  Map<Integer, Ticket> allTickets, String comm) {
+        List<Milestone> allMilList = new ArrayList<>(allMilestones.values());
+
+        for(Milestone m : allMilList) {
+            // trebuie sa verific daca nu este complete, caz in care le deblochez pe celelalte
+            if (m.getStatus().equals("COMPLETED")) {
+                // debloc
+                 for (String blockedMil : m.getBlockingFor()) {
+                     allMilestones.get(blockedMil).setBlocked(false);
+                     // trebuie sa vad cat a pierdut
+                     if (allMilestones.get(blockedMil).getDaysUntilDue(timestamp) == 0) {
+                         // a fost deblocat dupa dueDate
+                         // notific pe toata lumea
+                         allMilestones.get(blockedMil).notifyObservers("Milestone " + blockedMil
+                         + " was unblocked after due date. All active tickets are now CRITICAL.");
+                     }
+                 }
+            }
             // trebuie sa verific daca nu e blocat milestoneul
             if (!m.isBlocked()) {
                 // pentru fiecare vad cand a fost creat si daca sunt in cazul
@@ -195,6 +232,9 @@ public class Milestone {
                     for (Integer ticketId : m.getTickets()) {
                         if (allTickets.containsKey(ticketId)) {
                             allTickets.get(ticketId).setBussinesPriority("CRITICAL");
+                            // notificare pt critical
+                            m.notifyObservers("Milestone " + m.getName() + " is due tomorrow."
+                               + " All unresolved tickets are now CRITICAL.");
                         }
                     }
                 }

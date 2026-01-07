@@ -1,5 +1,6 @@
 package users;
 
+import forNotifications.Observer;
 import main.Milestone;
 import tickets.Ticket;
 
@@ -7,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Developer extends User {
+public class Developer extends User implements Observer {
     private String hireDate;
     private String expertiseArea;
     private String seniority;
@@ -16,6 +17,14 @@ public class Developer extends User {
     private List<Ticket> assignedTickets;
     private List<Ticket> pastAssignedTickets;
     private List<String> milName;
+
+    // notificar
+    private List<String> notif;
+
+    @Override
+    public void update(String message) {
+        notif.add(message);
+    }
 
     // constructor
     public Developer(String username, String email, String hireDate,
@@ -28,6 +37,7 @@ public class Developer extends User {
         this.assignedTickets = new ArrayList<>();
         this.pastAssignedTickets = new ArrayList<>();
         this.milName = new ArrayList<>();
+        this.notif = new ArrayList<>();
     }
 
     // trebuie pentru atunci cand rezolv tichete
@@ -67,6 +77,15 @@ public class Developer extends User {
 
     public void addMilName(String milName) {
        this.milName.add(milName);
+    }
+
+    public List<String> getNotifications() {
+        return notif;
+    }
+
+    // imi trebuie dupa ce le afisez
+    public void clearNotifications() {
+        notif.clear();
     }
 
     // ticketul x poate fi rezolvat de developeri din
@@ -109,7 +128,6 @@ public class Developer extends User {
 
 
     public String validAssigment(Ticket unTick, Map<String, Milestone> allMilestones) {
-
         // verifc 1 - zona de expertiza
         // aici vad ce poate sa faca developerul meu (ce zone)
         List<String> allowedAreasForTicket = allowedAreas(unTick.getExpertiseArea());

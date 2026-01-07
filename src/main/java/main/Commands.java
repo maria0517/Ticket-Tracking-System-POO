@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static main.ViewTickets.*;
+import static main.viewNotifications.getNotifications;
 import static tickets.Comment.*;
 import static main.Milestone.updateMilestones;
 import static main.viewMilestones.viewGoodMilestones;
@@ -63,6 +64,11 @@ public class Commands {
             String timestamp = cmd.get("timestamp").asText();
             JsonNode params = cmd.get("params");
             ObjectNode resultNode =  mapper.createObjectNode();
+            // toate mesajele de output incep cu asta
+            resultNode.put("command", command);
+            resultNode.put("username", username);
+            resultNode.put("timestamp", timestamp);
+
             if (!firstComm) {
                 firstComm = true;
                 // acum trebuie sa iau timpul de start
@@ -73,13 +79,17 @@ public class Commands {
             }
 
             // fac verificari daca trebuie sa modific stare tickete
-            updateMilestones(new ArrayList<>(allMilestones.values()), timestamp, allTickets, command);
+//            System.out.println("############# NEW COMM ####################");
+//            if (allMilestones.get("Hot Fixes") != null && command.equals("viewNotifications")) {
+//                System.out.println("state inainte update si in timpul lui viewNoti " + allMilestones.get("Hot Fixes").isBlocked());
+//            }
+            updateMilestones(allMilestones, timestamp, allTickets, command);
+//            if (allMilestones.get("Hot Fixes") != null && command.equals("viewNotifications")) {
+//                System.out.println("state dupa update si in timpul lui viewNoti " + allMilestones.get("Hot Fixes").isBlocked());
+//            }
 
             // creare output; daca am
             if (command.equals("viewTickets")) {
-                resultNode.put("command", command);
-                resultNode.put("username", username);
-                resultNode.put("timestamp", timestamp);
                 resultNode.put("tickets", getVisibleTickets(util, new ArrayList<>(allTickets.values())));
                 outputs.add(resultNode);
             }
@@ -94,9 +104,6 @@ public class Commands {
 
                 // verific daca nu am trecut
                 if (ticketDate.isAfter(end)) {
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error", "Tickets can only be reported during testing phases.");
                     outputs.add(resultNode);
                     continue; // nu mai creez ticketul
@@ -118,9 +125,6 @@ public class Commands {
                 }
                 if (!exista) {
                     // nu am userul; dau eroare
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error", "The user " + username + " does not exist.");
                     outputs.add(resultNode);
                 }
@@ -157,9 +161,6 @@ public class Commands {
                                     .setCreatedAt(timestamp).build();
                         } else {
                             // nu e raportat de nimeni; nu se poate
-                            resultNode.put("command", command);
-                            resultNode.put("username", username);
-                            resultNode.put("timestamp", timestamp);
                             resultNode.put("error", "Anonymous reports are "
                                     + "only allowed for tickets of type BUG.");
                             outputs.add(resultNode);
@@ -219,9 +220,6 @@ public class Commands {
                                     .setSuggestedFix(suggestedFix).setCreatedAt(timestamp).build();;
                         } else {
                             // nu e raportat de nimeni; nu se poate
-                            resultNode.put("command", command);
-                            resultNode.put("username", username);
-                            resultNode.put("timestamp", timestamp);
                             resultNode.put("error", "Anonymous reports are "
                                     + "only allowed for tickets of type BUG.");
                             outputs.add(resultNode);
@@ -254,18 +252,17 @@ public class Commands {
                                 // il am deja in alta parte
                                 // dau mesaj de eroare si ies cu totul
                                 validIdTicket = false;
-                                resultNode.put("command", command);
-                                resultNode.put("username", username);
-                                resultNode.put("timestamp", timestamp);
                                 resultNode.put("error", "Tickets " + idNode.asInt() + " already"
                                         + " assigned" + " to milestone " + unMil.getName() + ".");
                                 outputs.add(resultNode);
                             }
                         }
-                        ticketIds.add(idNode.asInt());
-                        // setez pentru fiecare ticket din ce milestone face parte
-                        allTickets.get(idNode.asInt()).setMilName(name);
-                        actualHist(allTickets.get(idNode.asInt()), username, timestamp, "createMilestone", "");
+                        if (validIdTicket) {
+                            ticketIds.add(idNode.asInt());
+                            // setez pentru fiecare ticket din ce milestone face parte
+                            allTickets.get(idNode.asInt()).setMilName(name);
+                            actualHist(allTickets.get(idNode.asInt()), username, timestamp, "createMilestone", "");
+                        }
                     }
                 }
                 List<String> assignedDevs = new ArrayList<>();
@@ -305,9 +302,6 @@ public class Commands {
                 }
                 if (managMeu == null) {
                     // nu este manager ce am eu acolo sau nu exista pur si simplu
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error", "The user does not have permission to "
                             + "execute this command: required role MANAGER; user role " + altTip.getRole() + ".");
                     outputs.add(resultNode);
@@ -327,16 +321,16 @@ public class Commands {
                         Milestone milestone = new Milestone(name, LocalDate.parse(dueDate), blockingFor, assignedDevs,
                                 ticketIds, timestamp, username);
 
-                        // nu stiu daca imi trebuie
-                        // de fapt aici trebuie ca sa fiu sigura ca totul e ok
                         // acum am toti developeri valizi
-                        // marchez si in lista lor separata
+                        // marchez si in listele lor separate
                         for (String devUsername : assignedDevs) {
                             for (User u : allUsers) {
                                 if (u.getUsername().equals(devUsername)) {
                                     // am un developer
                                     Developer dev = (Developer) u;
                                     dev.addMilName(name);
+                                    // trebuie sa i adaug si ca observeri
+                                    milestone.addObserver(dev);
                                 }
                             }
                         }
@@ -344,17 +338,16 @@ public class Commands {
                         // il pun cu toate milestoneurile
                         allMilestones.put(name, milestone);
                         // nu afisez nimic la succes
-
                         // trebuie asta ca sa pot face mereu aceste verificari
                         milestone.updateBlockState(new ArrayList<>(allMilestones.values()));
+                        // trebuie sa dau notificare
+                        milestone.notifyObservers("New milestone " + milestone.getName() +
+                            " has been created with due date " + milestone.getDueDate() + ".");
                     }
                 }
             }
 
             if (command.equals("viewMilestones")) {
-                resultNode.put("command", command);
-                resultNode.put("username", username);
-                resultNode.put("timestamp", timestamp);
                 resultNode.put("milestones", viewGoodMilestones(username, allUsers,
                         new ArrayList<>(allMilestones.values()), timestamp));
                 outputs.add(resultNode);
@@ -377,9 +370,6 @@ public class Commands {
                     actualHist(allTickets.get(ticketId), username, timestamp, "changeStatus", "OPEN");
 
                 } else {
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error",
                         devToAssig.validAssigment(unTick, allMilestones));
                     outputs.add(resultNode);
@@ -393,9 +383,6 @@ public class Commands {
                 // daca este IN PROGRESS
                 if (!unTick.getStatus().equals("IN_PROGRESS")) {
                     // nu e bun -> error
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error", "Only IN_PROGRESS tickets can be unassigned.");
                     outputs.add(resultNode);
                 } else {
@@ -411,13 +398,9 @@ public class Commands {
             }
             if (command.equals("viewAssignedTickets")) {
                 // vad tickete pentru cine a cerut
-                Developer dev = (Developer) util;
-
                 // afisare efectiva
-                resultNode.put("command", command);
-                resultNode.put("username", username);
-                resultNode.put("timestamp", timestamp);
-                resultNode.put("assignedTickets", getAssignedTickets(dev, dev.getAssignedTckets()));
+                resultNode.put("assignedTickets", getAssignedTickets((Developer) util,
+                      ((Developer) util).getAssignedTckets()));
                 outputs.add(resultNode);
             }
             if (command.equals("addComment")) {
@@ -430,9 +413,6 @@ public class Commands {
                     addComment(util, allTickets.get(ticketID), comment, timestamp);
                 } else if (!validAddComm(util, allTickets.get(ticketID), comment).equals("ignore")) {
                     // ii dau cu eroare
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error", validAddComm(util, allTickets.get(ticketID), comment));
                     outputs.add(resultNode);
                 }
@@ -442,10 +422,6 @@ public class Commands {
                 // sterg ultimul comm al acestui ticket, daca se poate
                 if (!undoAddComment(util, allTickets.get(ticketId)).equals("valid")
                         && !undoAddComment(util, allTickets.get(ticketId)).equals("ignore")) {
-                    // amm eroare
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     // asta e singura eroare
                     resultNode.put("error", "Comments are not allowed on anonymous tickets.");
                     outputs.add(resultNode);
@@ -465,8 +441,7 @@ public class Commands {
                     if (!allTickets.get(ticketID).getStatus()
                             .equals("CLOSED") && command.equals("changeStatus")) {
                         // modific status ticket cu +1
-                        result = changingStatus((Developer) util, timestamp, allMilestones.get(allTickets
-                                .get(ticketID).getMilName()), allTickets.get(ticketID), 1);
+                        result = changingStatus((Developer) util, timestamp, allMilestones, allTickets.get(ticketID), 1);
                         // adaug in istoric
                         actualHist(allTickets.get(ticketID), username, timestamp, "changeStatus", oldStatus);
                     }
@@ -475,17 +450,12 @@ public class Commands {
                             && command.equals("undoChangeStatus")) {
                         // ma duc inapoi cu 1 status ticket
                         System.out.println(allTickets.get(ticketID).getStatus());
-                        result = changingStatus((Developer) util, timestamp, allMilestones.get(allTickets
-                                .get(ticketID).getMilName()), allTickets.get(ticketID), 2);
+                        result = changingStatus((Developer) util, timestamp, allMilestones, allTickets.get(ticketID), 2);
                         actualHist(allTickets.get(ticketID), username, timestamp, "undoChangeStatus", oldStatus);
                     }
                 }
                 if (result != null && result.equals("naspa")) {
                     // eroare
-                    System.out.println("intru pe aici??");
-                    resultNode.put("command", command);
-                    resultNode.put("username", username);
-                    resultNode.put("timestamp", timestamp);
                     resultNode.put("error", "Ticket " + ticketID + " is not "
                          + "assigned to developer " + username + ".");
                     outputs.add(resultNode);
@@ -495,13 +465,27 @@ public class Commands {
                 // aici trebuie sa regandesc oleaca cam tot
                 // daca ii da deassign trebuie retinut in alta parte ca a avut acel
                 // ticket ca sa i pot vizualiza istoricul
-                resultNode.put("command", command);
-                resultNode.put("username", username);
-                resultNode.put("timestamp", timestamp);
                 resultNode.put("ticketHistory",
                     getHistoryTicket(util, new ArrayList<>(allTickets.values())));
                 outputs.add(resultNode);
             }
+            if (command.equals("search")) {
+
+            }
+            if (command.equals("viewNotifications")) {
+                // doar pentru developer
+                Developer dev =  (Developer) util;
+                resultNode.put("notifications", getNotifications(dev));
+                outputs.add(resultNode);
+            }
+            // for debugging
+//            for (Milestone m : allMilestones.values()) {
+//                System.out.println("milestone: " + m.getName() + " status " + m.getStatus() +
+//                       " blocked: " + m.isBlocked() + " at comm: " + command);
+//            }
+//            System.out.println("a comm passed " + command);
         }
     }
+
+
 }

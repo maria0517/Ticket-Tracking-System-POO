@@ -2,23 +2,23 @@ package users;
 
 public abstract class User {
     // factory
-        protected String username;
-        protected String email;
-        protected String role;
+    protected String username;
+    protected String email;
+    protected String role;
 
-        public User(String username, String mail, String role) {
-            this.username = username;
-            this.email = mail;
-            this.role = role;
-        }
+    public User(String username, String mail, String role) {
+         this.username = username;
+         this.email = mail;
+        this.role = role;
+    }
 
-        public String getUsername() {
+    public String getUsername() {
             return username;
         }
-        public String getMail() {
+    public String getMail() {
             return email;
         }
-        public String getRole() {
+    public String getRole() {
             return role;
         }
 }
