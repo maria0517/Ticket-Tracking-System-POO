@@ -133,6 +133,9 @@ public class Milestone {
 
     public int getDaysUntilDue(String currentTime) {
         // ba nu se face cu atunci cand a fost creat ci cu data comenziii!!!!!
+        if (status != null && status.equals("COMPLETED")) {
+            return daysUntilDue;
+        }
         this.daysUntilDue = (int) ChronoUnit.DAYS.between(LocalDate.parse(currentTime), dueDate) + 1;
 
         if (daysUntilDue <= 0) {
@@ -143,13 +146,17 @@ public class Milestone {
         return daysUntilDue;
     }
 
+    public void setDaysUntilDue(int daysUntilDue) {
+        this.daysUntilDue = daysUntilDue;
+    }
+
     public int getOverdue() {
         // momentan
         return overdueBy;
     }
 
     public void setOverdueBy(int overdueBy) {
-        this.overdueBy = 0;
+        this.overdueBy = overdueBy;
     }
 
     public void updateBlockState(List<Milestone> allMilestones) {

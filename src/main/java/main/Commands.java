@@ -465,7 +465,7 @@ public class Commands {
                     if (!allTickets.get(ticketID).getStatus()
                             .equals("CLOSED") && command.equals("changeStatus")) {
                         // modific status ticket cu +1
-                        result = changingStatus((Developer) util, allMilestones.get(allTickets
+                        result = changingStatus((Developer) util, timestamp, allMilestones.get(allTickets
                                 .get(ticketID).getMilName()), allTickets.get(ticketID), 1);
                         // adaug in istoric
                         actualHist(allTickets.get(ticketID), username, timestamp, "changeStatus", oldStatus);
@@ -475,7 +475,7 @@ public class Commands {
                             && command.equals("undoChangeStatus")) {
                         // ma duc inapoi cu 1 status ticket
                         System.out.println(allTickets.get(ticketID).getStatus());
-                        result = changingStatus((Developer) util, allMilestones.get(allTickets
+                        result = changingStatus((Developer) util, timestamp, allMilestones.get(allTickets
                                 .get(ticketID).getMilName()), allTickets.get(ticketID), 2);
                         actualHist(allTickets.get(ticketID), username, timestamp, "undoChangeStatus", oldStatus);
                     }
