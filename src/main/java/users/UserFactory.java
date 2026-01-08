@@ -4,9 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserFactory {
+public final class UserFactory {
 
-    public static User createUser(JsonNode node) {
+    // nu pot lasa constructorul default
+    private UserFactory() {
+        throw new UnsupportedOperationException("Clasa utilitara nu trebuie instantiata!!!");
+    }
+
+    /**
+     * creaza un obiect de tip User dintr-un Json
+     */
+    public static User createUser(final JsonNode node) {
 
         String role = node.get("role").asText();
         String username = node.get("username").asText();
@@ -24,7 +32,7 @@ public class UserFactory {
             for (JsonNode s : node.get("subordinates")) {
                 subs.add(s.asText());
             }
-            return new Manager( username, email, node.get("hireDate").asText(), subs);
+            return new Manager(username, email, node.get("hireDate").asText(), subs);
         }
         return null;
     }

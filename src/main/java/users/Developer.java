@@ -1,6 +1,6 @@
 package users;
 
-import forNotifications.Observer;
+import fornotifications.Observer;
 import main.Milestone;
 import tickets.Ticket;
 
