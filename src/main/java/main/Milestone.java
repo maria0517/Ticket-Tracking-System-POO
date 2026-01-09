@@ -1,7 +1,7 @@
 package main;
 
-import forNotifications.Observer;
-import forNotifications.Subject;
+import fornotifications.Observer;
+import fornotifications.Subject;
 import tickets.Ticket;
 
 import java.time.LocalDate;

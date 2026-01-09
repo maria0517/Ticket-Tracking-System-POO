@@ -5,11 +5,21 @@ import users.Developer;
 
 import java.util.Map;
 
-public class Status {
-    public static String changingStatus(Developer dev, String timestamp, Map<String, Milestone> allMilestone, Ticket ticket, int change_type) {
+public final class Status {
+
+    private Status() {
+        // pt (ne)instantiere
+    }
+
+    /**
+     * metoda care imi schimba statusul tichetelor si actualizeaza
+     * milestone in cazuri limita (nu mai exista tichete open)
+     */
+    public static String changingStatus(final Developer dev, final String timestamp,
+        final Map<String, Milestone> allMilestone, final Ticket ticket, final int changeType) {
         // incep sa vad cum ma duc
         Milestone m = allMilestone.get(ticket.getMilName());
-        if (change_type == 1) {
+        if (changeType == 1) {
             // +1
             if (ticket.getStatus().equals("IN_PROGRESS")) {
                 ticket.setStatus("RESOLVED");
@@ -18,7 +28,8 @@ public class Status {
                 // trebuie sa il mut din openTickets in closedTickets
                 m.getOpenTickets().remove(Integer.valueOf(ticket.getId()));
                 m.getClosedTickets().add(ticket.getId());
-                // trebuie sa vad daca e ultimul closed, caz in care trebuie sa deblochez celelalte milestoneuri
+                // trebuie sa vad daca e ultimul closed, caz
+                // in care trebuie sa deblochez celelalte milestoneuri
                 // fac cand dau updateMilestone
                 if (m.getOpenTickets().size() == 0) {
                     // trebuie sa blochez dueDate si overdueBy

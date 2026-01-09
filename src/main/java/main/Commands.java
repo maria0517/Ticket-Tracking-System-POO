@@ -3,6 +3,10 @@ package main;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import searchFilters.FilterDev;
+import searchFilters.FilterTick;
+import searchFilters.SearchStrategyTick;
+import searchFilters.SearchStrtaegyDev;
 import tickets.BugTicket;
 import tickets.FeatureRequestTicket;
 import tickets.Ticket;
@@ -12,13 +16,14 @@ import users.Manager;
 import users.User;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static main.ViewTickets.*;
+import static main.viewAfterSearch.viewSearchedDevs;
+import static main.viewAfterSearch.viewSearchedTickets;
 import static main.viewNotifications.getNotifications;
+import static searchFilters.Filters.parseDEVFiltersFromJson;
+import static searchFilters.Filters.parseTICKFiltersFromJson;
 import static tickets.Comment.*;
 import static main.Milestone.updateMilestones;
 import static main.viewMilestones.viewGoodMilestones;
@@ -78,15 +83,7 @@ public class Commands {
                 testPerEnd = start.plusDays(12).toString();
             }
 
-            // fac verificari daca trebuie sa modific stare tickete
-//            System.out.println("############# NEW COMM ####################");
-//            if (allMilestones.get("Hot Fixes") != null && command.equals("viewNotifications")) {
-//                System.out.println("state inainte update si in timpul lui viewNoti " + allMilestones.get("Hot Fixes").isBlocked());
-//            }
             updateMilestones(allMilestones, timestamp, allTickets, command);
-//            if (allMilestones.get("Hot Fixes") != null && command.equals("viewNotifications")) {
-//                System.out.println("state dupa update si in timpul lui viewNoti " + allMilestones.get("Hot Fixes").isBlocked());
-//            }
 
             // creare output; daca am
             if (command.equals("viewTickets")) {
@@ -470,7 +467,66 @@ public class Commands {
                 outputs.add(resultNode);
             }
             if (command.equals("search")) {
+                // toate filtrele cu care lucrez mai departe
+                JsonNode filtersNode = cmd.get("filters");
+                resultNode.put("searchType", filtersNode.get("searchType").asText());
+                if (util.getRole().equals("MANAGER")) {
+                    // aici trebuie sa vad ce vrea sa caute; dev sau tichete
+                    Manager man = (Manager) util;
+                    String searchType = cmd.get("filters").get("searchType").asText();
+                    if (searchType.equals("DEVELOPER")) {
+                        // trebuie sa caut dev (toti din subordinea lui)
+                        List<FilterDev> filters = parseDEVFiltersFromJson(filtersNode);
+                        // acum trebuie sa iau developerii din echipa amicului
+                        // ca eu i am pus ca si stringuri cu numele ((
+                        List<Developer> devsToSearch = new ArrayList<>();
+                        for (String nume : man.getSubordinates()) {
+                            for (User u : allUsers) {
+                                if (u.getUsername().equals(nume)) {
+                                    // am gasit un developer
+                                    devsToSearch.add((Developer) u);
+                                }
+                            }
+                        }
+                        // acum am tot ce imi trebuie -> fac cautarea
+                        List<Developer> devsDone = new SearchStrtaegyDev(filters).search(devsToSearch);
+                        // ipotetic gata -> afisarea dupa
+                        devsDone.sort(Comparator.comparing(Developer::getUsername));
+                        resultNode.put("results", viewSearchedDevs(devsDone));
+                    } else {
+                        // tichete; toate din sistem
+                        // mai intai iau filtrele
 
+                        List <FilterTick> filters = parseTICKFiltersFromJson(filtersNode, null , allMilestones);
+                        List <Ticket> tickDone = new SearchStrategyTick(filters).
+                              search(new ArrayList<>(allTickets.values()));
+                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode));
+                    }
+                } else {
+                    // am un developer si cauta doar tichete
+                    // open din toate milestoneurile din crae face parte
+                    Developer dev = (Developer) util;
+                    List<Ticket> tickToSearch = new ArrayList<>();
+                    for (String milName : dev.getMilName()) {
+                        for (Integer id : allMilestones.get(milName).getTickets()) {
+                            // din toate cele ale milestoneului, doar cele deschise
+                            if (allTickets.get(id).getStatus().equals("OPEN")) {
+                                tickToSearch.add(allTickets.get(id));
+                            }
+                        }
+                    }
+                    // acum am toate tichetele cred eu
+                    List <FilterTick> filters = parseTICKFiltersFromJson(filtersNode, (Developer) util, allMilestones);
+                    if (filters.size() == 0) {
+                        // nu am niciun filtru, il tratez ca pe viewTickets
+                        resultNode.put("results",
+                                viewSearchedTickets(new ArrayList<>(allTickets.values()), filtersNode ));
+                    } else {
+                        List<Ticket> tickDone = new SearchStrategyTick(filters).search(tickToSearch);
+                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode));
+                    }
+                }
+                outputs.add(resultNode);
             }
             if (command.equals("viewNotifications")) {
                 // doar pentru developer
@@ -478,14 +534,6 @@ public class Commands {
                 resultNode.put("notifications", getNotifications(dev));
                 outputs.add(resultNode);
             }
-            // for debugging
-//            for (Milestone m : allMilestones.values()) {
-//                System.out.println("milestone: " + m.getName() + " status " + m.getStatus() +
-//                       " blocked: " + m.isBlocked() + " at comm: " + command);
-//            }
-//            System.out.println("a comm passed " + command);
         }
     }
-
-
 }
