@@ -72,4 +72,12 @@ public class BugTicket extends Ticket {
 			return new BugTicket(this);
 		}
 	}
+
+	public String getFrequency() {
+		return frequency;
+	}
+
+	public String getSeverity() {
+		return severity;
+	}
 }

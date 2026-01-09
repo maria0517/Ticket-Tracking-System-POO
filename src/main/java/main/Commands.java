@@ -22,6 +22,7 @@ import static main.ViewTickets.*;
 import static main.viewAfterSearch.viewSearchedDevs;
 import static main.viewAfterSearch.viewSearchedTickets;
 import static main.viewNotifications.getNotifications;
+import static metrics.ReportOutputGenerator.ReportFormat;
 import static searchFilters.Filters.parseDEVFiltersFromJson;
 import static searchFilters.Filters.parseTICKFiltersFromJson;
 import static tickets.Comment.*;
@@ -446,7 +447,6 @@ public class Commands {
                     if (!allTickets.get(ticketID).getStatus().equals("IN_PROGRESS")
                             && command.equals("undoChangeStatus")) {
                         // ma duc inapoi cu 1 status ticket
-                        System.out.println(allTickets.get(ticketID).getStatus());
                         result = changingStatus((Developer) util, timestamp, allMilestones, allTickets.get(ticketID), 2);
                         actualHist(allTickets.get(ticketID), username, timestamp, "undoChangeStatus", oldStatus);
                     }
@@ -496,7 +496,6 @@ public class Commands {
                     } else {
                         // tichete; toate din sistem
                         // mai intai iau filtrele
-
                         List <FilterTick> filters = parseTICKFiltersFromJson(filtersNode, null , allMilestones);
                         List <Ticket> tickDone = new SearchStrategyTick(filters).
                               search(new ArrayList<>(allTickets.values()));
@@ -534,6 +533,23 @@ public class Commands {
                 resultNode.put("notifications", getNotifications(dev));
                 outputs.add(resultNode);
             }
+            if (command.equals("generateCustomerImpactReport")
+                    || command.equals("generateTicketRiskReport")) {
+                // trebuie mai intai sa mi fac lista cu toate
+                // ticketele pe care le folosesc in raport
+                List<Ticket> ticksForReport = new ArrayList<>();
+                for (Ticket t : allTickets.values()) {
+                    if (t.getStatus().equals("OPEN") || t.getStatus().equals("IN_PROGRESS")) {
+                        ticksForReport.add(t);
+                    }
+                }
+                // am ticketele apelez direct
+                // fac in functia de format distinctia intre cele doua
+                // tipuri de rapoarte
+                resultNode.put("report", ReportFormat(ticksForReport, command));
+                outputs.add(resultNode);
+            }
+
         }
     }
 }
