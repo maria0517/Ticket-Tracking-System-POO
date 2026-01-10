@@ -8,17 +8,17 @@ import java.util.List;
 
 import static metrics.CustomerImpCalcScore.calculateImpact;
 import static metrics.MetricsConst.getRiskInterv;
+import static metrics.StabilityCheck.stabilityTest;
 import static metrics.TicketRiskCalcScore.calculateRisk;
 
 public class ReportOutputGenerator {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-
-    public static ObjectNode ReportFormat (List<Ticket> ticks, String command) {
+    public static ObjectNode reportFormat (List<Ticket> ticks, String command) {
         ObjectNode reportNode = mapper.createObjectNode();
         // acum trebuie sa generez raportul (il fac strict pentru afisare
-        reportNode.put("totalTickets", ticks.size());
+
 
         // cate sunt din fiecare
         ObjectNode tickestByTypeNode = mapper.createObjectNode();
@@ -28,8 +28,14 @@ public class ReportOutputGenerator {
                 filter(t -> t.getType().equals("FEATURE_REQUEST")).count());
         tickestByTypeNode.put("UI_FEEDBACK", ticks.stream().
                 filter(t -> t.getType().equals("UI_FEEDBACK")).count());
+        if (command.equals("appStabilityReport")) {
+            reportNode.put("totalOpenTickets", ticks.size());
+            reportNode.set("openTicketsByType", tickestByTypeNode);
+        } else {
+            reportNode.put("totalTickets", ticks.size());
+            reportNode.set("ticketsByType", tickestByTypeNode);
+        }
 
-        reportNode.set("ticketsByType", tickestByTypeNode);
 
         // acum dupa prioritati
         ObjectNode tickestByPriorNode = mapper.createObjectNode();
@@ -41,57 +47,93 @@ public class ReportOutputGenerator {
                 t.getBusinessPriority().equals("HIGH")).count());
         tickestByPriorNode.put("CRITICAL", ticks.stream().filter(t ->
                 t.getBusinessPriority().equals("CRITICAL")).count());
-        reportNode.set("ticketsByPriority", tickestByPriorNode);
+        if (command.equals("appStabilityReport")) {
+            reportNode.set("openTicketsByPriority", tickestByPriorNode);
+        } else {
+            reportNode.set("ticketsByPriority", tickestByPriorNode);
+        }
+
         // dupa vin calculele puternice
 
-        double scorBug = 0;
-        double scorReq = 0;
-        double scorUIFeed = 0;
+        double scorBugImp = 0;
+        double scorReqImp = 0;
+        double scorUIFeedImp = 0;
+        double scorBugRisk = 0;
+        double scorReqRisk = 0;
+        double scorUIFeedRisk = 0;
         for (Ticket tick : ticks) {
-            if (command.equals("generateCustomerImpactReport")) {
+            if (command.equals("generateCustomerImpactReport")
+                || command.equals("appStabilityReport")) {
                 if (tick.getType().equals("BUG")) {
-                    scorBug += calculateImpact(tick);
+                    scorBugImp += calculateImpact(tick);
                 } else if (tick.getType().equals("FEATURE_REQUEST")) {
-                    scorReq += calculateImpact(tick);
+                    scorReqImp += calculateImpact(tick);
                 } else {
-                    scorUIFeed += calculateImpact(tick);
+                    scorUIFeedImp += calculateImpact(tick);
                 }
-            } else if (command.equals("generateTicketRiskReport")) {
+            }
+            if (command.equals("generateTicketRiskReport")
+                || command.equals("appStabilityReport")) {
                 if (tick.getType().equals("BUG")) {
-                    scorBug += calculateRisk(tick);
+                    System.out.println("un risk la un bug " + calculateRisk(tick));
+                    scorBugRisk += calculateRisk(tick);
                 } else if (tick.getType().equals("FEATURE_REQUEST")) {
-                    scorReq += calculateRisk(tick);
+                    scorReqRisk += calculateRisk(tick);
                 } else {
-                    scorUIFeed += calculateRisk(tick);
+                    scorUIFeedRisk += calculateRisk(tick);
                 }
             }
 
         }
+        System.out.println("scoruri: " + scorBugRisk + " " + scorReqRisk + " " + scorUIFeedRisk);
+
         // am scorurile
         // le impart la nr de tick specifice si afisez
-        scorBug = Math.round(scorBug / (double) ticks.stream().
+        scorBugImp = Math.round(scorBugImp / (double) ticks.stream().
                 filter(t -> t.getType().equals("BUG")).count() * 100.0) / 100.0;
-        scorReq = Math.round(scorReq / (double) ticks.stream().filter(t -> t.getType()
+        scorReqImp = Math.round(scorReqImp / (double) ticks.stream().filter(t -> t.getType()
                 .equals("FEATURE_REQUEST")).count() * 100.0) / 100.0;
-        scorUIFeed = Math.round(scorUIFeed / (double) ticks.stream().filter(t -> t.getType()
+        scorUIFeedImp = Math.round(scorUIFeedImp / (double) ticks.stream().filter(t -> t.getType()
+                .equals("UI_FEEDBACK")).count() * 100.0) / 100.0;
+        scorBugRisk = Math.round(scorBugRisk / (double) ticks.stream().
+                filter(t -> t.getType().equals("BUG")).count() * 100.0) / 100.0;
+        scorReqRisk = Math.round(scorReqRisk / (double) ticks.stream().filter(t -> t.getType()
+                .equals("FEATURE_REQUEST")).count() * 100.0) / 100.0;
+        scorUIFeedRisk = Math.round(scorUIFeedRisk / (double) ticks.stream().filter(t -> t.getType()
                 .equals("UI_FEEDBACK")).count() * 100.0) / 100.0;
 
         // doar la afisare intreb ce comanda trebuie sa mai fac
-        ObjectNode typeNode = mapper.createObjectNode();
-        if (command.equals("generateCustomerImpactReport")) {
-            typeNode.put("BUG", scorBug);
-            typeNode.put("FEATURE_REQUEST", scorReq);
-            typeNode.put("UI_FEEDBACK", scorUIFeed);
-            reportNode.set("customerImpactByType", typeNode);
-        }
-        if (command.equals("generateTicketRiskReport")) {
+        ObjectNode typeRiskNode = mapper.createObjectNode();
+
+        if (command.equals("generateTicketRiskReport")
+                || command.equals("appStabilityReport")) {
             // fac altceva cu acele rezultate
-            typeNode.put("BUG", getRiskInterv(scorBug));
-            typeNode.put("FEATURE_REQUEST", getRiskInterv(scorReq));
-            typeNode.put("UI_FEEDBACK", getRiskInterv(scorUIFeed));
-            reportNode.set("riskByType", typeNode);
+            System.out.println("scoruri: " + scorBugRisk + " " + scorReqRisk + " " + scorUIFeedRisk);
+            typeRiskNode.put("BUG", getRiskInterv(scorBugRisk));
+            typeRiskNode.put("FEATURE_REQUEST", getRiskInterv(scorReqRisk));
+            typeRiskNode.put("UI_FEEDBACK", getRiskInterv(scorUIFeedRisk));
+            reportNode.set("riskByType", typeRiskNode);
         }
 
+        ObjectNode typeImpNode = mapper.createObjectNode();
+        if (command.equals("generateCustomerImpactReport")
+            || command.equals("appStabilityReport")) {
+            typeImpNode.put("BUG", scorBugImp);
+            typeImpNode.put("FEATURE_REQUEST", scorReqImp);
+            typeImpNode.put("UI_FEEDBACK", scorUIFeedImp);
+            if (command.equals("appStabilityReport")) {
+                reportNode.set("impactByType", typeImpNode);
+            } else {
+                reportNode.set("customerImpactByType", typeImpNode);
+            }
+        }
+
+
+        // aici doar pentru ultima trebuie sa vad stabilitatea
+        if (command.equals("appStabilityReport")) {
+            reportNode.put("appStability", stabilityTest(scorBugImp, scorReqImp, scorUIFeedImp,
+           getRiskInterv(scorBugRisk), getRiskInterv(scorReqRisk), getRiskInterv(scorUIFeedRisk)));
+        }
         return reportNode;
     }
 }

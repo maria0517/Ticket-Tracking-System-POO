@@ -11,6 +11,10 @@ public class MetricsConst {
     public final static int FEATURE_REQ_MAX_RISK = 20;
     public final static int UI_FEED_MAX_RISK = 100;
 
+    public final static int BUG_MAX_EFF = 70;
+    public final static int FEATURE_REQ_MAX_EFF = 20;
+    public final static int UI_FEED_MAX_EFF = 20;
+
 
     public static int freqToNumber (String frequency) {
         return switch (frequency) {
