@@ -22,7 +22,8 @@ import static main.ViewTickets.*;
 import static main.viewAfterSearch.viewSearchedDevs;
 import static main.viewAfterSearch.viewSearchedTickets;
 import static main.viewNotifications.getNotifications;
-import static metrics.ReportOutputGenerator.ReportFormat;
+import static metrics.ReportOutputGenerator.reportFormat;
+import static metrics.ResolutionReportOutputGenerator.resolutionReportFormat;
 import static searchFilters.Filters.parseDEVFiltersFromJson;
 import static searchFilters.Filters.parseTICKFiltersFromJson;
 import static tickets.Comment.*;
@@ -546,10 +547,34 @@ public class Commands {
                 // am ticketele apelez direct
                 // fac in functia de format distinctia intre cele doua
                 // tipuri de rapoarte
-                resultNode.put("report", ReportFormat(ticksForReport, command));
+                resultNode.put("report", reportFormat(ticksForReport, command));
                 outputs.add(resultNode);
             }
-
+            if (command.equals("generateResolutionEfficiencyReport")) {
+                // aici trebuie luate doar cele closed sau resolved
+                List<Ticket> ticksForReport = new ArrayList<>();
+                for (Ticket t : allTickets.values()) {
+                    if (t.getStatus().equals("CLOSED") || t.getStatus().equals("RESOLVED")) {
+                        ticksForReport.add(t);
+                    }
+                }
+                resultNode.put("report", resolutionReportFormat(ticksForReport));
+                outputs.add(resultNode);
+            }
+            if (command.equals("appStabilityReport")) {
+                // aici e oleaca de scris
+                List<Ticket> ticksForReport = new ArrayList<>();
+                for (Ticket t : allTickets.values()) {
+                    if (t.getStatus().equals("OPEN") || t.getStatus().equals("IN_PROGRESS")) {
+                        ticksForReport.add(t);
+                    }
+                }
+                if (ticksForReport.size() == 0) {
+                    // app este stabila, dar nu stiu momentan cum trebuie facuta asta
+                }
+                resultNode.put("report", reportFormat(ticksForReport, command));
+                outputs.add(resultNode);
+            }
         }
     }
 }

@@ -3,6 +3,9 @@ package tickets;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 public abstract class Ticket {
 	// campuri comune tuturor tichetelor
 	protected int id;
@@ -89,6 +92,10 @@ public abstract class Ticket {
 		this.assignedAt = timestamp;
 	}
 
+	public void setSolvedAt(String timestamp) {
+		this.solvedAt = timestamp;
+	}
+
 	public void setMilName(String name) {
 		this.milestoneName = name;
 	}
@@ -99,5 +106,13 @@ public abstract class Ticket {
 
 	public List<Comment> getComments() {
 		return comments;
+	}
+
+	public double getDaysToResolve() {
+		LocalDate assignedDate = LocalDate.parse(assignedAt);
+		LocalDate solvedDate = LocalDate.parse(solvedAt);
+
+		// intrebarea este cat scoate nebunia asta daca se assigned = solved
+		return (double) ChronoUnit.DAYS.between(assignedDate, solvedDate) + 1.0;
 	}
 }

@@ -23,6 +23,8 @@ public final class Status {
             // +1
             if (ticket.getStatus().equals("IN_PROGRESS")) {
                 ticket.setStatus("RESOLVED");
+                // trebuie setata data la ticket, cand s a finalizat
+                ticket.setSolvedAt(timestamp);
             } else if (ticket.getStatus().equals("RESOLVED")) {
                 ticket.setStatus("CLOSED");
                 // trebuie sa il mut din openTickets in closedTickets
