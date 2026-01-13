@@ -1,11 +1,11 @@
-package searchFilters;
+package searchfilters;
 
 import tickets.Ticket;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 
-public class CreatedFilter implements FilterTick {
+public final class CreatedFilter implements FilterTick {
 
     public static final int AT = 0;
     public static final int BEFORE = -1;
@@ -14,13 +14,13 @@ public class CreatedFilter implements FilterTick {
     private final LocalDate date;
     private final int type;
 
-    public CreatedFilter(String date, int type) {
+    public CreatedFilter(final String date, final int type) {
         this.date = LocalDate.parse(date);
         this.type = type;
     }
 
     @Override
-    public List<Ticket> apply(List<Ticket> tickets) {
+    public List<Ticket> apply(final List<Ticket> tickets) {
         List<Ticket> result = new ArrayList<>();
         for (Ticket t : tickets) {
             LocalDate created = LocalDate.parse(t.getCreatedAt());

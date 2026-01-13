@@ -1,28 +1,32 @@
-package searchFilters;
+package searchfilters;
 
 import tickets.Ticket;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.ArrayList;
 
-public class KeywordFilter implements FilterTick {
+public final class KeywordFilter implements FilterTick {
 
     private final List<String> keywords;
 
-    public KeywordFilter(List<String> keywords) {
+    public KeywordFilter(final List<String> keywords) {
         this.keywords = keywords;
     }
 
     @Override
-    public List<Ticket> apply(List<Ticket> tickets) {
+    public List<Ticket> apply(final List<Ticket> tickets) {
         List<Ticket> result = new ArrayList<>();
 
         for (Ticket t : tickets) {
             String title = t.getTitle();
             String desc = t.getDescription();
 
-            if (title == null) title = "";
-            if (desc == null) desc = "";
-
+            // daca nu am campurile, le las goale
+            if (title == null) {
+                title = "";
+            }
+            if (desc == null) {
+                desc = "";
+            }
             title = title.toLowerCase();
             desc = desc.toLowerCase();
 

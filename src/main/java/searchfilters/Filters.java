@@ -1,4 +1,4 @@
-package searchFilters;
+package searchfilters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import main.Milestone;
@@ -8,22 +8,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Filters {
-    public static List<FilterDev> parseDEVFiltersFromJson (JsonNode filtersNode) {
+public final class Filters {
+
+    private Filters() {
+
+    }
+    /**
+     * imi ia filtrele din json si le duce in filtre ca tip de date
+     */
+    public static List<FilterDev> parseDEVFiltersFromJson(final JsonNode filtersNode) {
         List<FilterDev> filters = new ArrayList<>();
 
         if (filtersNode.has("expertiseArea")) {
-            filters.add(new expertiseFilter(filtersNode.get("expertiseArea").asText()));
+            filters.add(new ExpertiseFilter(filtersNode.get("expertiseArea").asText()));
         }
         if (filtersNode.has("seniority")) {
-            filters.add(new seniorityFilter(filtersNode.get("seniority").asText()));
+            filters.add(new SeniorityFilter(filtersNode.get("seniority").asText()));
         }
         // aici mai trebuie performance
         return filters;
     }
 
-    public static List<FilterTick> parseTICKFiltersFromJson (JsonNode filtersNode, Developer dev,
-        Map<String, Milestone> allMilestones) {
+    /**
+     * ce am zis mai sus numai ca pentru tickete, nu developeri
+     */
+    public static List<FilterTick> parseTICKFiltersFromJson(final JsonNode filtersNode,
+          final Developer dev, final Map<String, Milestone> allMilestones) {
         List<FilterTick> filters = new ArrayList<>();
 
         if (filtersNode.has("businessPriority")) {
@@ -51,8 +61,8 @@ public class Filters {
         }
         // aici mai trebuie assig
         if (filtersNode.has("availableForAssignment")) {
-            filters.add(new AvailableAssigFilter(filtersNode.get("availableForAssignment").asBoolean(),
-                    dev, allMilestones));
+            filters.add(new AvailableAssigFilter(filtersNode.get("availableForAssignment")
+                    .asBoolean(), dev, allMilestones));
         }
         // returnez filtrele
         return filters;
