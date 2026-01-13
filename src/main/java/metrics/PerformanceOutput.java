@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import tickets.Ticket;
 import users.Developer;
+import users.Manager;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -11,10 +12,17 @@ import java.util.List;
 
 public class PerformanceOutput {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static ObjectNode PerfScoreOutput(List<Ticket> ticksForRep, Developer dev) {
-        ObjectNode devNode = mapper.createObjectNode();
+    private PerformanceOutput() {
+        // prevenire instantiere
+    }
+
+    /**
+     * face outputul si imi si calculeaza ce trebuie sa afisez
+     */
+    public static ObjectNode perfScoreOutput(final List<Ticket> ticksForRep, final Developer dev) {
+        ObjectNode devNode = MAPPER.createObjectNode();
         devNode.put("username", dev.getUsername());
         // nr de tichete inchise de amic
         int nrTicksClosed = (int) ticksForRep.stream().filter(t ->
@@ -51,6 +59,9 @@ public class PerformanceOutput {
         return devNode;
     }
 
+    /**
+     * calculeaza efectiv performance scorul
+     */
     public static double calcPerfScore (Developer dev, List<Ticket> ticksForRep,
                    double averageResolutionTime, int nrTicksCLosed) {
         int nrBugTick = (int) dev.getAssignedTckets().stream().filter(t ->
@@ -64,13 +75,11 @@ public class PerformanceOutput {
             return Math.max(0, 0.5 * nrTicksCLosed - ticketDiversityFactor(nrBugTick,
                     nrReqTick, nrUITick)) + MetricsConst.getSeniorityBonus("JUNIOR");
         } else if (dev.getSeniority().equals("MID")) {
-            System.out.println("yfdgfoivu");
             return Math.max(0, 0.5 * nrTicksCLosed + 0.7 * highPriorityTickets(dev)
                     - 0.3 * averageResolutionTime) + MetricsConst.getSeniorityBonus("MID");
 
         } else {
             // senior
-            System.out.println("aoihfbvidsv");
             return Math.max(0, 0.5 * nrTicksCLosed + 1.0 * highPriorityTickets(dev)
                     - 0.5 * averageResolutionTime) + MetricsConst.getSeniorityBonus("SENIOR");
 
@@ -81,12 +90,10 @@ public class PerformanceOutput {
     public static double highPriorityTickets(Developer dev) {
         double nrTicks = 0;
         for (Ticket t : dev.getAssignedTckets()) {
-            System.out.println("prioritate ticket" + t.getBusinessPriority());
             if (t.getBusinessPriority().equals("HIGH") || t.getBusinessPriority().equals("CRITICAL")) {
                 nrTicks++;
             }
         }
-        System.out.println("aici + " + nrTicks);
         return nrTicks;
     }
 

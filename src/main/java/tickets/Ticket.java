@@ -115,4 +115,8 @@ public abstract class Ticket {
 		// intrebarea este cat scoate nebunia asta daca se assigned = solved
 		return (double) ChronoUnit.DAYS.between(assignedDate, solvedDate) + 1.0;
 	}
+
+    public void setAssignedtTo(String username) {
+		this.assignedTo = username;
+    }
 }

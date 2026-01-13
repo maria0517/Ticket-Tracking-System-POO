@@ -217,11 +217,14 @@ public class Milestone implements Subject {
                     // au trecut 3 zile trebuie crescute prioritatile la tickete
                     for (Integer ticketId : m.getTickets()) {
                         if (allTickets.containsKey(ticketId)) {
-                            if (allTickets.get(ticketId).getBusinessPriority().equals("LOW")) {
+                            if (allTickets.get(ticketId).getBusinessPriority().equals("LOW") &&
+                                !allTickets.get(ticketId).getStatus().equals("CLOSED")) {
                                 allTickets.get(ticketId).setBussinesPriority("MEDIUM");
-                            } else if (allTickets.get(ticketId).getBusinessPriority().equals("MEDIUM")) {
+                            } else if (allTickets.get(ticketId).getBusinessPriority().equals("MEDIUM") &&
+                                    !allTickets.get(ticketId).getStatus().equals("CLOSED")) {
                                 allTickets.get(ticketId).setBussinesPriority("HIGH");
-                            } else if (allTickets.get(ticketId).getBusinessPriority().equals("HIGH")) {
+                            } else if (allTickets.get(ticketId).getBusinessPriority().equals("HIGH") &&
+                                    !allTickets.get(ticketId).getStatus().equals("CLOSED")) {
                                 allTickets.get(ticketId).setBussinesPriority("CRITICAL");
                             }
                         }

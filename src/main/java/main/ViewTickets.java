@@ -193,7 +193,7 @@ public class ViewTickets {
         node.put("createdAt", t.getCreatedAt());
         node.put("assignedAt", t.getAssignedAt());
         node.put("solvedAt", t.getSolvedAt());
-        node.put("assignedTo", t.getAssignedTo());
+        node.put("assignedTo", "");
         node.put("reportedBy", t.getReportedBy());
         // node.putArray("comments"); // momentan gol
         ArrayNode commentsArray = mapper.createArrayNode();

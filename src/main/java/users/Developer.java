@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Developer extends User implements Observer {
+public final class Developer extends User implements Observer {
     private String hireDate;
     private String expertiseArea;
     private String seniority;
@@ -88,6 +88,7 @@ public class Developer extends User implements Observer {
         notif.clear();
     }
 
+
     // ticketul x poate fi rezolvat de developeri din
     // zonele de expertiza a, b, c
     private List<String> allowedAreas(String expertiseAreaEx) {
@@ -122,10 +123,8 @@ public class Developer extends User implements Observer {
                 areas.add("FULLSTACK");
                 break;
         }
-
         return areas;
     }
-
 
     public String validAssigment(Ticket unTick, Map<String, Milestone> allMilestones) {
         // verifc 1 - zona de expertiza

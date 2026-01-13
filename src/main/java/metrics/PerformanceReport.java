@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static metrics.PerformanceOutput.PerfScoreOutput;
+import static metrics.PerformanceOutput.perfScoreOutput;
 
 public class PerformanceReport {
 
@@ -34,7 +34,7 @@ public class PerformanceReport {
         // acum pentru fiecare dev, ma pun si ii calc toate alea si
         // returnez ca un arraynode ca sa imi fie mai usor
         for (Developer dev : reportDevs) {
-            reportNode.add(PerfScoreOutput(ticksReport, dev));
+            reportNode.add(perfScoreOutput(ticksReport, dev));
         }
         return reportNode;
     }

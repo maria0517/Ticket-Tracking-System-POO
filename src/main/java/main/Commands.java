@@ -3,10 +3,10 @@ package main;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import searchFilters.FilterDev;
-import searchFilters.FilterTick;
-import searchFilters.SearchStrategyTick;
-import searchFilters.SearchStrtaegyDev;
+import searchfilters.FilterDev;
+import searchfilters.FilterTick;
+import searchfilters.SearchStrategyTick;
+import searchfilters.SearchStrtaegyDev;
 import tickets.BugTicket;
 import tickets.FeatureRequestTicket;
 import tickets.Ticket;
@@ -16,16 +16,18 @@ import users.Manager;
 import users.User;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 
 import static main.ViewTickets.*;
 import static main.viewAfterSearch.viewSearchedDevs;
 import static main.viewAfterSearch.viewSearchedTickets;
 import static main.viewNotifications.getNotifications;
+import static metrics.PerformanceReport.generatePerformanceReport;
 import static metrics.ReportOutputGenerator.reportFormat;
 import static metrics.ResolutionReportOutputGenerator.resolutionReportFormat;
-import static searchFilters.Filters.parseDEVFiltersFromJson;
-import static searchFilters.Filters.parseTICKFiltersFromJson;
+import static searchfilters.Filters.parseDEVFiltersFromJson;
+import static searchfilters.Filters.parseTICKFiltersFromJson;
 import static tickets.Comment.*;
 import static main.Milestone.updateMilestones;
 import static main.viewMilestones.viewGoodMilestones;
@@ -259,6 +261,7 @@ public class Commands {
                         if (validIdTicket) {
                             ticketIds.add(idNode.asInt());
                             // setez pentru fiecare ticket din ce milestone face parte
+                            // startTestingPhase nu am asa ceva facut de aia nu merge
                             allTickets.get(idNode.asInt()).setMilName(name);
                             actualHist(allTickets.get(idNode.asInt()), username, timestamp, "createMilestone", "");
                         }
@@ -364,6 +367,7 @@ public class Commands {
                     devToAssig.addTickets(unTick);
                     // trebuie pus ca fiind assignat la data la care s a dat comanda
                     allTickets.get(ticketId).setAssignedAt(timestamp);
+                    allTickets.get(ticketId).setAssignedtTo(devToAssig.getUsername());
                     allTickets.get(ticketId).setStatus("IN_PROGRESS");
                     actualHist(unTick, username, timestamp, "assignTicket", "");
                     actualHist(allTickets.get(ticketId), username, timestamp, "changeStatus", "OPEN");
@@ -575,6 +579,37 @@ public class Commands {
                 resultNode.put("report", reportFormat(ticksForReport, command));
                 outputs.add(resultNode);
             }
+            if (command.equals("generatePerformanceReport")) {
+                List<Ticket> ticksForReport = new ArrayList<>();
+                LocalDate commandDate = LocalDate.parse(timestamp);
+                // calculez luna anterioara
+                YearMonth previousMonth = YearMonth.from(commandDate).minusMonths(1);
+                for (Ticket t : allTickets.values()) {
+                    if (t.getStatus().equals("CLOSED")) {
+                        // trebuie luate doar cele din luna anterioara
+                        // calculez luna la care s a finalizat tichetul
+                        YearMonth solvedMonth = YearMonth.from(LocalDate.parse(t.getSolvedAt()));
+                        if (solvedMonth.equals(previousMonth)) {
+                            // ticket valid
+                            ticksForReport.add(t);
+                        }
+                    }
+                }
+                Manager manag = null;
+                for (User u : allUsers) {
+                    if (u.getUsername().equals(username)) {
+                        manag = (Manager) u;
+                    }
+                }
+
+                // apelez direct functia de afisare
+                // generatePerformanceReport
+                resultNode.put("report",
+                        generatePerformanceReport(ticksForReport, allUsers, manag));
+                // ipotetic e bine
+                outputs.add(resultNode);
+            }
         }
+
     }
 }

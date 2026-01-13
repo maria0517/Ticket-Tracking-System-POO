@@ -19,10 +19,6 @@ public abstract class User {
             return username;
         }
 
-    public String getMail() {
-            return email;
-    }
-
     /**
      * Return role
      */
