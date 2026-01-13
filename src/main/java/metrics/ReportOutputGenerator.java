@@ -75,7 +75,6 @@ public class ReportOutputGenerator {
             if (command.equals("generateTicketRiskReport")
                 || command.equals("appStabilityReport")) {
                 if (tick.getType().equals("BUG")) {
-                    System.out.println("un risk la un bug " + calculateRisk(tick));
                     scorBugRisk += calculateRisk(tick);
                 } else if (tick.getType().equals("FEATURE_REQUEST")) {
                     scorReqRisk += calculateRisk(tick);
@@ -83,9 +82,7 @@ public class ReportOutputGenerator {
                     scorUIFeedRisk += calculateRisk(tick);
                 }
             }
-
         }
-        System.out.println("scoruri: " + scorBugRisk + " " + scorReqRisk + " " + scorUIFeedRisk);
 
         // am scorurile
         // le impart la nr de tick specifice si afisez
@@ -108,7 +105,6 @@ public class ReportOutputGenerator {
         if (command.equals("generateTicketRiskReport")
                 || command.equals("appStabilityReport")) {
             // fac altceva cu acele rezultate
-            System.out.println("scoruri: " + scorBugRisk + " " + scorReqRisk + " " + scorUIFeedRisk);
             typeRiskNode.put("BUG", getRiskInterv(scorBugRisk));
             typeRiskNode.put("FEATURE_REQUEST", getRiskInterv(scorReqRisk));
             typeRiskNode.put("UI_FEEDBACK", getRiskInterv(scorUIFeedRisk));
@@ -127,8 +123,7 @@ public class ReportOutputGenerator {
                 reportNode.set("customerImpactByType", typeImpNode);
             }
         }
-
-
+        
         // aici doar pentru ultima trebuie sa vad stabilitatea
         if (command.equals("appStabilityReport")) {
             reportNode.put("appStability", stabilityTest(scorBugImp, scorReqImp, scorUIFeedImp,

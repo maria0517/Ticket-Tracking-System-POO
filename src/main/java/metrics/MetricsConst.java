@@ -77,6 +77,15 @@ public class MetricsConst {
         }
     }
 
+    public static double getSeniorityBonus (String senior) {
+        return switch (senior) {
+            case "JUNIOR" -> 5;
+            case "MID" -> 15;
+            case "SENIOR" -> 30;
+            default -> 0;
+        };
+    }
+
     // functia de normalizare sa o iau mai usor
     public static double normalizeScore(double base, double max) {
         return Math.min(100.0, (base * 100.0) / max);
