@@ -12,11 +12,11 @@ import java.util.List;
 public class viewAfterSearch {
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static ArrayNode viewSearchedTickets(List<Ticket> tickets, JsonNode filtersNode) {
+    public static ArrayNode viewSearchedTickets(List<Ticket> tickets, JsonNode filtersNode, boolean manComm) {
         ArrayNode ticketsNode = mapper.createArrayNode();
         List<String> keywords = null;
         for (Ticket tick : tickets) {
-            ticketsNode.add(searchedTickToJson(tick, filtersNode));
+            ticketsNode.add(searchedTickToJson(tick, filtersNode, manComm));
         }
         return ticketsNode;
     }
@@ -29,7 +29,7 @@ public class viewAfterSearch {
         return devsNode;
     }
 
-    public static ObjectNode searchedTickToJson(Ticket t, JsonNode filterNode) {
+    public static ObjectNode searchedTickToJson(Ticket t, JsonNode filterNode, boolean manComm) {
         ObjectNode node = mapper.createObjectNode();
         node.put("id", t.getId());
         node.put("type", t.getType());
@@ -41,6 +41,10 @@ public class viewAfterSearch {
         node.put("reportedBy", t.getReportedBy());
         if (filterNode.has("keywords")) {
             node.put("matchingWords", filterNode.get("keywords"));
+        } else if (manComm) {
+            // inseamna ca am manager si il dau efectiv gol, ce ciudatenie mare
+            ArrayNode filtersNode = mapper.createArrayNode();
+            node.put("matchingWords", filtersNode);
         }
         return node;
     }

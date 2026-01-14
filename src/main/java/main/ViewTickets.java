@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class ViewTickets {
 
@@ -69,7 +70,8 @@ public class ViewTickets {
         return array;
     }
 
-    public static ArrayNode getHistoryTicket(User u, List<Ticket> allTickets) {
+    public static ArrayNode getHistoryTicket(User u, List<Ticket> allTickets,
+        Map<String, Milestone> allMilestones) {
         ArrayNode result = mapper.createArrayNode();
 
         List<Ticket> visibleTickets = new ArrayList<>();
@@ -83,9 +85,12 @@ public class ViewTickets {
             visibleTickets.addAll(dev.getPastAssigTickets());
         } else if (u.getRole().equals("MANAGER")) {
             // managerul vede tichetele din milestone-urile lui
-            for (Ticket t : allTickets) {
-                if (t.getMilName().equals(u.getUsername())) {
-                    visibleTickets.add(t);
+            for (Milestone mil :  allMilestones.values()) {
+                if (mil.getCreatorName().equals(u.getUsername())) {
+                    // am un milestone facut de acest manager; iau toate ticketele din el
+                    for(Integer idTick : mil.getTickets()) {
+                        visibleTickets.add(allTickets.get(idTick));
+                    }
                 }
             }
         }

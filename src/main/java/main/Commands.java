@@ -87,8 +87,21 @@ public class Commands {
                 testPerEnd = start.plusDays(12).toString();
             }
 
-            updateMilestones(allMilestones, timestamp, allTickets, command);
+            updateMilestones(allMilestones, timestamp, allTickets);
 
+            if (command.equals("startTestingPhase")) {
+                // de la asta imi crapa 18
+                for (Milestone m : allMilestones.values()) {
+                    // daca e unul activ, trebuie respinsa comanda
+                    // nu fac asta momentan
+                }
+                // presupun ca este o comanda valida, care trebuie executata
+                // incep o noua perioada in care se pot raporta tichete
+                // resetez ce aveam initial
+                testPeriod = timestamp;
+                LocalDate start = LocalDate.parse(testPeriod);
+                testPerEnd = start.plusDays(12).toString();
+            }
             // creare output; daca am
             if (command.equals("viewTickets")) {
                 resultNode.put("tickets", getVisibleTickets(util, new ArrayList<>(allTickets.values())));
@@ -468,7 +481,7 @@ public class Commands {
                 // daca ii da deassign trebuie retinut in alta parte ca a avut acel
                 // ticket ca sa i pot vizualiza istoricul
                 resultNode.put("ticketHistory",
-                    getHistoryTicket(util, new ArrayList<>(allTickets.values())));
+                    getHistoryTicket(util, new ArrayList<>(allTickets.values()), allMilestones));
                 outputs.add(resultNode);
             }
             if (command.equals("search")) {
@@ -504,7 +517,7 @@ public class Commands {
                         List <FilterTick> filters = parseTICKFiltersFromJson(filtersNode, null , allMilestones);
                         List <Ticket> tickDone = new SearchStrategyTick(filters).
                               search(new ArrayList<>(allTickets.values()));
-                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode));
+                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode, true));
                     }
                 } else {
                     // am un developer si cauta doar tichete
@@ -524,10 +537,10 @@ public class Commands {
                     if (filters.size() == 0) {
                         // nu am niciun filtru, il tratez ca pe viewTickets
                         resultNode.put("results",
-                                viewSearchedTickets(new ArrayList<>(allTickets.values()), filtersNode ));
+                                viewSearchedTickets(new ArrayList<>(allTickets.values()), filtersNode, false));
                     } else {
                         List<Ticket> tickDone = new SearchStrategyTick(filters).search(tickToSearch);
-                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode));
+                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode, false));
                     }
                 }
                 outputs.add(resultNode);

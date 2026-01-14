@@ -21,6 +21,8 @@ public final class Developer extends User implements Observer {
     // notificar
     private List<String> notif;
 
+    private double perforScore = 0.0;
+
     @Override
     public void update(String message) {
         notif.add(message);
@@ -88,6 +90,13 @@ public final class Developer extends User implements Observer {
         notif.clear();
     }
 
+    public double getPerforScore() {
+        return perforScore;
+    }
+
+    public void setPerforScore(double perforScore) {
+        this.perforScore = perforScore;
+    }
 
     // ticketul x poate fi rezolvat de developeri din
     // zonele de expertiza a, b, c
@@ -172,5 +181,7 @@ public final class Developer extends User implements Observer {
 
         return "valid";
     }
+
+
 }
 

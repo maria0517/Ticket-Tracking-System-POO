@@ -191,7 +191,7 @@ public class Milestone implements Subject {
         }
     }
 
-    public static void updateMilestones(Map<String, Milestone> allMilestones, String timestamp,  Map<Integer, Ticket> allTickets, String comm) {
+    public static void updateMilestones(Map<String, Milestone> allMilestones, String timestamp,  Map<Integer, Ticket> allTickets) {
         List<Milestone> allMilList = new ArrayList<>(allMilestones.values());
 
         for(Milestone m : allMilList) {

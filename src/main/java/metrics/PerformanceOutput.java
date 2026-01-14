@@ -53,6 +53,9 @@ public class PerformanceOutput {
         } else {
             devNode.put("performanceScore", Math.round(calcPerfScore(dev, ticksForRep,
                     averageResolutionTime, nrTicksClosed) * 100.0) / 100.0);
+            // il si pastrez pentru ca imi trebuie pentru filtrare
+            dev.setPerforScore(Math.round(calcPerfScore(dev, ticksForRep,
+                    averageResolutionTime, nrTicksClosed) * 100.0) / 100.0);
         }
         devNode.put("seniority", dev.getSeniority());
 

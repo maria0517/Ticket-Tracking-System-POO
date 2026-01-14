@@ -9,6 +9,7 @@ import users.Developer;
 import users.User;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -59,11 +60,14 @@ public class viewMilestones {
             node.put("daysUntilDue", m.getDaysUntilDue(timestamp));
             node.put("overdueBy", m.getOverdue());
             ArrayNode openTicketsNode = mapper.createArrayNode();
+            // sortez pt afisare
+            Collections.sort(m.getOpenTickets());
             for (Integer id : m.getOpenTickets()) {
                 openTicketsNode.add(id);
             }
             node.set("openTickets", openTicketsNode);
             ArrayNode closedTicketsNode = mapper.createArrayNode();
+            Collections.sort(m.getClosedTickets());
             for (Integer id : m.getClosedTickets()) {
                 closedTicketsNode.add(id);
             }
@@ -87,6 +91,10 @@ public class viewMilestones {
                         } else {
                             // am
                             ArrayNode assigTick = mapper.createArrayNode();
+                            // le sortez pentru afisare strict
+                            // pt logica nu conteaza
+                            developer.getAssignedTckets()
+                                    .sort(Comparator.comparingInt(Ticket::getId));
                             for (Ticket t : developer.getAssignedTckets()) {
                                 if (t.getMilName().equals(m.getName())) {
                                     assigTick.add(t.getId());

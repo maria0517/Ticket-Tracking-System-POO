@@ -26,6 +26,12 @@ public final class Filters {
             filters.add(new SeniorityFilter(filtersNode.get("seniority").asText()));
         }
         // aici mai trebuie performance
+        if (filtersNode.has("performanceScoreBelow")) {
+            filters.add(new PerformanceFilter((filtersNode.get("performanceScoreBelow").asText()), -1));
+        }
+        if (filtersNode.has("performanceScoreAbove")) {
+            filters.add(new PerformanceFilter((filtersNode.get("performanceScoreAbove").asText()), 1));
+        }
         return filters;
     }
 
