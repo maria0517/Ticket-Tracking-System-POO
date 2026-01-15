@@ -41,12 +41,11 @@ public class ResolutionReportOutputGenerator {
                 t.getBusinessPriority().equals("CRITICAL")).count());
         reportNode.set("ticketsByPriority", tickestByPriorNode);
 
-        // acum trebuie facut cu days si ce mai era
-
         double scorBug = 0;
         double scorReq = 0;
         double scorUIFeed = 0;
         for (Ticket tick : ticks) {
+            // System.out.println("ticketul cu " + tick.getId() + " are statusul: " + tick.getBusinessPriority());
             if (tick.getType().equals("BUG")) {
                 scorBug += calculateEfficiency(tick);
             } else if (tick.getType().equals("FEATURE_REQUEST")) {

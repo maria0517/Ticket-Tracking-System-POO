@@ -87,7 +87,7 @@ public class Commands {
                 testPerEnd = start.plusDays(12).toString();
             }
 
-            updateMilestones(allMilestones, timestamp, allTickets);
+            updateMilestones(allMilestones, timestamp, allTickets, command);
 
             if (command.equals("startTestingPhase")) {
                 // de la asta imi crapa 18
@@ -415,8 +415,12 @@ public class Commands {
             if (command.equals("viewAssignedTickets")) {
                 // vad tickete pentru cine a cerut
                 // afisare efectiva
-                resultNode.put("assignedTickets", getAssignedTickets((Developer) util,
-                      ((Developer) util).getAssignedTckets()));
+                // nu am tratat cazul in care e manager!!!!!
+                // de acolo crapa
+                if (util.getRole().equals("DEVELOPER")) {
+                    resultNode.put("assignedTickets", getAssignedTickets((Developer) util,
+                            ((Developer) util).getAssignedTckets()));
+                }
                 outputs.add(resultNode);
             }
             if (command.equals("addComment")) {
