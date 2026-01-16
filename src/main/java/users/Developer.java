@@ -24,13 +24,13 @@ public final class Developer extends User implements Observer {
     private double perforScore = 0.0;
 
     @Override
-    public void update(String message) {
+    public void update(final String message) {
         notif.add(message);
     }
 
     // constructor
-    public Developer(String username, String email, String hireDate,
-               String expertiseArea, String seniority) {
+    public Developer(final String username, final String email, final String hireDate,
+          final String expertiseArea, final String seniority) {
         super(username, email, "DEVELOPER");
         this.hireDate = hireDate;
         this.expertiseArea = expertiseArea;
@@ -54,20 +54,26 @@ public final class Developer extends User implements Observer {
         return seniority;
     }
 
-    public void addTickets(Ticket unTicket) {
+    /**
+     * adauga un tichet
+     */
+    public void addTickets(final Ticket unTicket) {
         assignedTickets.add(unTicket);
         // trebuie facute si modificari la ticket
     }
 
     public List<Ticket> getAssignedTckets() {
-        return  assignedTickets;
+        return assignedTickets;
     }
 
-    public  List<Ticket> getPastAssigTickets() {
-        return  pastAssignedTickets;
+    public List<Ticket> getPastAssigTickets() {
+        return pastAssignedTickets;
     }
 
-    public void unAssigTick(Ticket unTick) {
+    /**
+     * deasigneaza un tichet
+     */
+    public void unAssigTick(final Ticket unTick) {
         assignedTickets.remove(unTick);
         // aici trebuie sa l adaug in lista de pastTickets
         pastAssignedTickets.add(unTick);
@@ -77,15 +83,20 @@ public final class Developer extends User implements Observer {
         return milName;
     }
 
-    public void addMilName(String milName) {
-       this.milName.add(milName);
+    /**
+     * cred ca zice numele totul))
+     */
+    public void addMilName(final String milNameNew) {
+       this.milName.add(milNameNew);
     }
 
     public List<String> getNotifications() {
         return notif;
     }
 
-    // imi trebuie dupa ce le afisez
+    /**
+     * // imi trebuie dupa ce le afisez
+     */
     public void clearNotifications() {
         notif.clear();
     }
@@ -94,13 +105,13 @@ public final class Developer extends User implements Observer {
         return perforScore;
     }
 
-    public void setPerforScore(double perforScore) {
+    public void setPerforScore(final double perforScore) {
         this.perforScore = perforScore;
     }
 
     // ticketul x poate fi rezolvat de developeri din
     // zonele de expertiza a, b, c
-    private List<String> allowedAreas(String expertiseAreaEx) {
+    private List<String> allowedAreas(final String expertiseAreaEx) {
         List<String> areas = new ArrayList<>();
 
         switch (expertiseAreaEx) {
@@ -131,33 +142,41 @@ public final class Developer extends User implements Observer {
                 areas.add("DB");
                 areas.add("FULLSTACK");
                 break;
+
+            default:
+                break;
         }
+        // return la ce zone sunt bune
         return areas;
     }
 
-    public String validAssigment(Ticket unTick, Map<String, Milestone> allMilestones) {
+    /**
+     * metoda care verifica daca poate fi facuta asignarea
+     */
+    public String validAssigment(final Ticket unTick, final Map<String, Milestone> allMilestones) {
         // verifc 1 - zona de expertiza
         // aici vad ce poate sa faca developerul meu (ce zone)
         List<String> allowedAreasForTicket = allowedAreas(unTick.getExpertiseArea());
         if (!allowedAreasForTicket.contains(expertiseArea)) {
-            String errorMessage = "Developer " + username + " cannot assign ticket " + unTick.getId()
-                    + " due to expertise area. Required: "
+            String errorMessage = "Developer " + username + " cannot assign ticket "
+                    + unTick.getId() + " due to expertise area. Required: "
                     + String.join(", ", allowedAreasForTicket)
                     + "; Current: " + expertiseArea + ".";
-
             return errorMessage;
         }
         // fulstack e cel mai seic (face de toate)
 
         // verif 2 - senioritate
-        if(this.seniority.equals("JUNIOR") && !(unTick.getBusinessPriority().
+        if (this.seniority.equals("JUNIOR") && !(unTick.getBusinessPriority().
               equals("LOW") || (unTick.getBusinessPriority().equals("MEDIUM")))) {
-            return "Developer " + username + " cannot assign ticket " + unTick.getId() + " due to seniority level. "
-            + "Required: MID, SENIOR; Current: " + this.seniority + ".";
+            return "Developer " + username + " cannot assign ticket " + unTick.getId()
+                    + " due to seniority level. " + "Required: MID, SENIOR; Current: "
+                    + this.seniority + ".";
         }
-        if(this.seniority.equals("MID") && unTick.getBusinessPriority().equals("CRITICAL")) {
-            return  "Developer " + username + " cannot assign ticket " + unTick.getId() + " due to seniority level. "
-                    + "Required: SENIOR; Current: " + this.seniority + ".";
+        if (this.seniority.equals("MID") && unTick.getBusinessPriority().equals("CRITICAL")) {
+            return  "Developer " + username + " cannot assign ticket " + unTick.getId()
+                    + " due to seniority level. " + "Required: SENIOR; Current: "
+                    + this.seniority + ".";
         }
         // daca e senior poate orice si nu am treaba cu el
 
@@ -165,7 +184,6 @@ public final class Developer extends User implements Observer {
         if (!unTick.getStatus().equals("OPEN")) {
             return "Only OPEN tickets can be assigned.";
         }
-
 
         // pe partea cu milestones ma mai gandesc ca e ceva fishy acolo; trebuie exemple
         if (!milName.contains(unTick.getMilName())) {
@@ -181,7 +199,5 @@ public final class Developer extends User implements Observer {
 
         return "valid";
     }
-
-
 }
 

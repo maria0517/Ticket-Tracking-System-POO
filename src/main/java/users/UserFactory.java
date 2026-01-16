@@ -12,7 +12,7 @@ public final class UserFactory {
     }
 
     /**
-     * creaza un obiect de tip User dintr-un Json
+     * creaza un obiect de tip User dintr un Json
      */
     public static User createUser(final JsonNode node) {
 
