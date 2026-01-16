@@ -1,14 +1,14 @@
 package tickets;
 
-public class FeatureRequestTicket extends Ticket {
+public final class FeatureRequestTicket extends Ticket {
 
     // aici nu ar mai fi nevoie de ticket
     private String businessValue;
     private String customerDemand;
 
     // constructor complet
-    private FeatureRequestTicket(Builder b) {
-        super( b.id, "FEATURE_REQUEST", b.title, b.businessPriority,
+    private FeatureRequestTicket(final Builder b) {
+        super(b.id, "FEATURE_REQUEST", b.title, b.businessPriority,
            "OPEN", b.expertiseArea, b.description, b.reportedBy, b.createdAt);
 
         this.businessValue = b.businessValue;
@@ -25,7 +25,7 @@ public class FeatureRequestTicket extends Ticket {
     }
 
     // builderul
-    public static class Builder {
+    public static final class Builder {
         // campuri (comune + particulare)
         private int id;
         private String title;
@@ -36,57 +36,75 @@ public class FeatureRequestTicket extends Ticket {
 
         private String businessValue;
         private String customerDemand;
-
         private String createdAt;
 
-
-        // setteri
-        public Builder setId(int id) {
-            this.id = id;
+        /**
+         * setter
+         */
+        public Builder setId(final int idNou) {
+            this.id = idNou;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setTitle(final String titleNou) {
+            this.title = titleNou;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setBusinessPriority(final String businessPriorityN) {
+            this.businessPriority = businessPriorityN;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setExpertiseArea(final String expertiseAreaN) {
+            this.expertiseArea = expertiseAreaN;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setDescription(final String descrip) {
+            this.description = descrip;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setReportedBy(final String reportBy) {
+            this.reportedBy = reportBy;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setBusinessValue(final String businessVal) {
+            this.businessValue = businessVal;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setCustomerDemand(final String customerDemandN) {
+            this.customerDemand = customerDemandN;
+            return this;
+        }
+        /**
+         * setter
+         */
+        public Builder setCreatedAt(final String creatAt) {
+            this.createdAt = creatAt;
             return this;
         }
 
-        public Builder setTitle(String title) {
-            this.title = title;
-            return this;
-        }
-
-        public Builder setBusinessPriority(String businessPriority) {
-            this.businessPriority = businessPriority;
-            return this;
-        }
-
-        public Builder setExpertiseArea(String expertiseArea) {
-            this.expertiseArea = expertiseArea;
-            return this;
-        }
-
-        public Builder setDescription(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public Builder setReportedBy(String reportedBy) {
-            this.reportedBy = reportedBy;
-            return this;
-        }
-
-        public Builder setBusinessValue(String businessValue) {
-            this.businessValue = businessValue;
-            return this;
-        }
-
-        public Builder setCustomerDemand(String customerDemand) {
-            this.customerDemand = customerDemand;
-            return this;
-        }
-
-        public Builder setCreatedAt(String createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        // build final
+        /**
+         * aici se face buildul final
+         */
         public FeatureRequestTicket build() {
             return new FeatureRequestTicket(this);
         }

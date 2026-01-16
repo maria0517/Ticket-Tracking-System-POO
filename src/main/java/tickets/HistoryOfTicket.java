@@ -1,18 +1,17 @@
 package tickets;
 
-public class HistoryOfTicket {
+public final class HistoryOfTicket {
     private String author;
     private String timestamp;
     // la assign / deassign; la createMil, la change status
     private String action;
 
-    // opțional:
-    String fromStatus;
-    String toStatus;
-    String milName;
-    String fromDev;
+    // optionale astea
+    private String fromStatus;
+    private String toStatus;
+    private String milName;
 
-    public HistoryOfTicket(String author, String timestamp, String action) {
+    public HistoryOfTicket(final String author, final String timestamp, final String action) {
         this.author = author;
         this.timestamp = timestamp;
         this.action = action;
@@ -30,7 +29,11 @@ public class HistoryOfTicket {
         return timestamp;
     }
 
-    public static void actualHist(Ticket tick, String author, String timestamp, String action, String oldStatus) {
+    /**
+     * adaug comentariu la tichet
+     */
+    public static void actualHist(final Ticket tick, final String author, final String timestamp,
+           final String action, final String oldStatus) {
         // acum vad cum il aduag aici fara probleme
         HistoryOfTicket forAdd = null;
         if (action.equals("createMilestone")) {
@@ -50,26 +53,21 @@ public class HistoryOfTicket {
             forAdd.setFromStatus(oldStatus);
             forAdd.setToStatus(tick.getStatus());
         }
-        // mai e aia cu removeDev care nu stiu cat imi trebuie acum
         // il adaug
         tick.getHistory().add(forAdd);
     }
 
     // momentan setteri, ajung si la getteri
-    public void setFromStatus(String fromStatus) {
+    public void setFromStatus(final String fromStatus) {
         this.fromStatus = fromStatus;
     }
 
-    public void setToStatus(String toStatus) {
+    public void setToStatus(final String toStatus) {
         this.toStatus = toStatus;
     }
 
-    public void setMilName(String milName) {
+    public void setMilName(final String milName) {
         this.milName = milName;
-    }
-
-    public void setFromDev(String fromDev) {
-        this.fromDev = fromDev;
     }
 
     public String getFromStatus() {
@@ -84,7 +82,4 @@ public class HistoryOfTicket {
         return milName;
     }
 
-    public String getFromDev() {
-        return fromDev;
-    }
 }

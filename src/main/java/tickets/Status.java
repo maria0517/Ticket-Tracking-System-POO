@@ -4,9 +4,7 @@ import main.Milestone;
 import users.Developer;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
-
 
 
 public final class Status {
@@ -45,14 +43,14 @@ public final class Status {
                     // mai intai sa vad daca nu sunt dupa deadline
                     LocalDate actualDate = LocalDate.parse(timestamp);
                     for (String milName : m.getBlockingFor()) {
-                        // deblocarea o fac efectiv in updateMilestones, aici doar dau notificarea
-                        // trebuie si notificare
+                        // deblocarea o fac efectiv in updateMilestones
+                        // trebuie doar sa dau notificare
                         LocalDate dueMilDate = allMilestones.get(milName).getDueDate();
                         if (!dueMilDate.isBefore(actualDate)) {
                             // a fost deblocat inainte de vreme
                             // asta o fac in alta parte
                             allMilestones.get(milName).notifyObservers("Milestone " + milName
-                                    + " is now unblocked as ticket " + ticket.getId() + " has been CLOSED.");
+                          + " is now unblocked as ticket " + ticket.getId() + " has been CLOSED.");
                         }
 
                     }
