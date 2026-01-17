@@ -1,4 +1,4 @@
-package fornotifications;
+package forNotifications;
 
 public interface Subject {
     // interfata care ma ajuta sa gestionez
@@ -9,13 +9,6 @@ public interface Subject {
      * functie pentru adaugare
      */
     void addObserver(Observer o);
-
-    /**
-     *
-     * @param o
-     * functie pt stergere
-     */
-    void removeObserver(Observer o);
 
     /**
      *  efectiv metoda de notificare

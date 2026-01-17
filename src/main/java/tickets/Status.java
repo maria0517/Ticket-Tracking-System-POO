@@ -1,6 +1,6 @@
 package tickets;
 
-import main.Milestone;
+import milestones.Milestone;
 import users.Developer;
 
 import java.time.LocalDate;

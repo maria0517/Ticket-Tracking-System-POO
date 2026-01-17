@@ -11,17 +11,21 @@ import static metrics.MetricsConst.getRiskInterv;
 import static metrics.StabilityCheck.stabilityTest;
 import static metrics.TicketRiskCalcScore.calculateRisk;
 
-public class ReportOutputGenerator {
+public final class ReportOutputGenerator {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private ReportOutputGenerator() { }
 
-    public static ObjectNode reportFormat (List<Ticket> ticks, String command) {
-        ObjectNode reportNode = mapper.createObjectNode();
-        // acum trebuie sa generez raportul (il fac strict pentru afisare
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    /**
+     * face formatul pt raport
+     */
+    public static ObjectNode reportFormat(final List<Ticket> ticks, final String command) {
+        ObjectNode reportNode = MAPPER.createObjectNode();
+        // acum trebuie sa generez raportul (il fac strict pentru afisare)
 
         // cate sunt din fiecare
-        ObjectNode tickestByTypeNode = mapper.createObjectNode();
+        ObjectNode tickestByTypeNode = MAPPER.createObjectNode();
         tickestByTypeNode.put("BUG", ticks.stream().
                 filter(t -> t.getType().equals("BUG")).count());
         tickestByTypeNode.put("FEATURE_REQUEST", ticks.stream().
@@ -38,7 +42,7 @@ public class ReportOutputGenerator {
 
 
         // acum dupa prioritati
-        ObjectNode tickestByPriorNode = mapper.createObjectNode();
+        ObjectNode tickestByPriorNode = MAPPER.createObjectNode();
         tickestByPriorNode.put("LOW", ticks.stream().filter(t ->
                 t.getBusinessPriority().equals("LOW")).count());
         tickestByPriorNode.put("MEDIUM", ticks.stream().filter(t ->
@@ -87,20 +91,26 @@ public class ReportOutputGenerator {
         // am scorurile
         // le impart la nr de tick specifice si afisez
         scorBugImp = Math.round(scorBugImp / (double) ticks.stream().
-                filter(t -> t.getType().equals("BUG")).count() * 100.0) / 100.0;
+                filter(t -> t.getType().equals("BUG")).count() * MetricsConst.ONE_HUNDRED)
+                / MetricsConst.ONE_HUNDRED;
         scorReqImp = Math.round(scorReqImp / (double) ticks.stream().filter(t -> t.getType()
-                .equals("FEATURE_REQUEST")).count() * 100.0) / 100.0;
+                .equals("FEATURE_REQUEST")).count() * MetricsConst.ONE_HUNDRED)
+                / MetricsConst.ONE_HUNDRED;
         scorUIFeedImp = Math.round(scorUIFeedImp / (double) ticks.stream().filter(t -> t.getType()
-                .equals("UI_FEEDBACK")).count() * 100.0) / 100.0;
+                .equals("UI_FEEDBACK")).count() * MetricsConst.ONE_HUNDRED)
+                / MetricsConst.ONE_HUNDRED;
         scorBugRisk = Math.round(scorBugRisk / (double) ticks.stream().
-                filter(t -> t.getType().equals("BUG")).count() * 100.0) / 100.0;
+                filter(t -> t.getType().equals("BUG")).count() * MetricsConst.ONE_HUNDRED)
+                / MetricsConst.ONE_HUNDRED;
         scorReqRisk = Math.round(scorReqRisk / (double) ticks.stream().filter(t -> t.getType()
-                .equals("FEATURE_REQUEST")).count() * 100.0) / 100.0;
+                .equals("FEATURE_REQUEST")).count() * MetricsConst.ONE_HUNDRED)
+                / MetricsConst.ONE_HUNDRED;
         scorUIFeedRisk = Math.round(scorUIFeedRisk / (double) ticks.stream().filter(t -> t.getType()
-                .equals("UI_FEEDBACK")).count() * 100.0) / 100.0;
+                .equals("UI_FEEDBACK")).count() * MetricsConst.ONE_HUNDRED)
+                / MetricsConst.ONE_HUNDRED;
 
         // doar la afisare intreb ce comanda trebuie sa mai fac
-        ObjectNode typeRiskNode = mapper.createObjectNode();
+        ObjectNode typeRiskNode = MAPPER.createObjectNode();
 
         if (command.equals("generateTicketRiskReport")
                 || command.equals("appStabilityReport")) {
@@ -111,7 +121,7 @@ public class ReportOutputGenerator {
             reportNode.set("riskByType", typeRiskNode);
         }
 
-        ObjectNode typeImpNode = mapper.createObjectNode();
+        ObjectNode typeImpNode = MAPPER.createObjectNode();
         if (command.equals("generateCustomerImpactReport")
             || command.equals("appStabilityReport")) {
             typeImpNode.put("BUG", scorBugImp);
@@ -123,7 +133,7 @@ public class ReportOutputGenerator {
                 reportNode.set("customerImpactByType", typeImpNode);
             }
         }
-        
+
         // aici doar pentru ultima trebuie sa vad stabilitatea
         if (command.equals("appStabilityReport")) {
             reportNode.put("appStability", stabilityTest(scorBugImp, scorReqImp, scorUIFeedImp,

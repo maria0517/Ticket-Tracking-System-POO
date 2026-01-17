@@ -7,9 +7,14 @@ import tickets.UIFeedbackTicket;
 
 import static metrics.MetricsConst.normalizeScore;
 
-public class ResolutionEfficiencyCalcScore {
+public final class ResolutionEfficiencyCalcScore {
 
-    public static double calculateEfficiency(Ticket tick) {
+    private ResolutionEfficiencyCalcScore() { }
+
+    /**
+     * calculez eficienta
+     */
+    public static double calculateEfficiency(final Ticket tick) {
         double scoreRisk = 0;
 
         if (tick.getType().equals("BUG")) {
@@ -27,8 +32,8 @@ public class ResolutionEfficiencyCalcScore {
             return normalizeScore(scoreRisk, MetricsConst.FEATURE_REQ_MAX_EFF);
         } else {
             UIFeedbackTicket uif = (UIFeedbackTicket) tick;
-            scoreRisk = (uif.getUsabilityScore() + MetricsConst.businValToNumber
-                    (uif.getBusinessValue())) / tick.getDaysToResolve();
+            scoreRisk = (uif.getUsabilityScore() + MetricsConst.businValToNumber(
+                    uif.getBusinessValue())) / tick.getDaysToResolve();
             return normalizeScore(scoreRisk, MetricsConst.UI_FEED_MAX_EFF);
         }
     }

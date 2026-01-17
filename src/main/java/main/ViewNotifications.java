@@ -4,12 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import users.Developer;
 
-public class viewNotifications {
+public final class ViewNotifications {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private ViewNotifications() { }
 
-    public static ArrayNode getNotifications(Developer dev) {
-        ArrayNode notifArray = mapper.createArrayNode();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /**
+     * @return la toate notificarile unui anumit dev
+     */
+    public static ArrayNode getNotifications(final Developer dev) {
+        ArrayNode notifArray = MAPPER.createArrayNode();
 
         for (String msg : dev.getNotifications()) {
             notifArray.add(msg);

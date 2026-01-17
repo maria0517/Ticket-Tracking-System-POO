@@ -1,7 +1,7 @@
 package users;
 
-import fornotifications.Observer;
-import main.Milestone;
+import forNotifications.Observer;
+import milestones.Milestone;
 import tickets.Ticket;
 
 import java.util.ArrayList;

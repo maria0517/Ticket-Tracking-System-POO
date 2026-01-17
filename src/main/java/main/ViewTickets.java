@@ -3,6 +3,7 @@ package main;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import milestones.Milestone;
 import tickets.HistoryOfTicket;
 import tickets.Ticket;
 import users.Developer;
@@ -14,12 +15,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-public class ViewTickets {
+public final class ViewTickets {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private ViewTickets() { }
 
-    public static ArrayNode getVisibleTickets(User util, List<Ticket> allTickets) {
-        ArrayNode array = mapper.createArrayNode();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /**
+     * scoate outputul pentru tichete
+     */
+    public static ArrayNode getVisibleTickets(final User util, final List<Ticket> allTickets) {
+        ArrayNode array = MAPPER.createArrayNode();
 
         // aici trebuie sa vad ce afisez in functie de tipul de user
         if (util.getUsername().contains("manager")) {
@@ -27,18 +33,17 @@ public class ViewTickets {
             for (Ticket unTicket : allTickets) {
                 array.add(ticketToJson(unTicket));
             }
-
         } else if (util.getUsername().contains("reporter")) {
             // nimic aici
-            // mananc caca, aici se vad doar ticketele date de acel reporter;
+            // mananc caca, aici se vad doar ticketele date de acel reporter
             return array;
-
         } else {
             // am developer; afisez doar ticketele open care sunt
             // assignate aceluiasi milestone
             Developer dev = (Developer) util;
             for (Ticket unTicket : allTickets) {
-                if(unTicket.getStatus().equals("OPEN") && dev.getMilName().contains(unTicket.getMilName())) {
+                if (unTicket.getStatus().equals("OPEN")
+                        && dev.getMilName().contains(unTicket.getMilName())) {
                     array.add(ticketToJson(unTicket));
                 }
             }
@@ -49,30 +54,32 @@ public class ViewTickets {
         return array;
     }
 
-    public static ArrayNode getAssignedTickets(User util, List<Ticket> assigTickets) {
-        ArrayNode array = mapper.createArrayNode();
+    /**
+     * returneaza doar outputul pentru tichetele assignate
+     */
+    public static ArrayNode getAssignedTickets(final List<Ticket> assigTickets) {
+        ArrayNode array = MAPPER.createArrayNode();
 
-        assigTickets.sort(Comparator
-                .comparingInt((Ticket t) -> priorityValue(
-                        t.getBusinessPriority() != null ? t.getBusinessPriority() : "LOW"
-                ))
+        assigTickets.sort(Comparator.comparingInt((Ticket t) -> priorityValue(
+                t.getBusinessPriority() != null ? t.getBusinessPriority() : "LOW"))
                 .thenComparing(t -> {
-                    String dateStr = t.getCreatedAt() != null ? t.getCreatedAt() : "2100-01-01";
-                    return LocalDate.parse(dateStr);
-                })
-                .thenComparingInt(t -> t.getId())
-        );
+                String dateStr = t.getCreatedAt() != null
+                // aici am pus o data de nu o sa ajunga niciodata
+                ? t.getCreatedAt() : "2100-01-01"; return LocalDate.parse(dateStr); })
+                .thenComparingInt(t -> t.getId()));
 
         for (Ticket unTicket : assigTickets) {
             array.add(ticketToJsonAssig(unTicket));
         }
-
         return array;
     }
 
-    public static ArrayNode getHistoryTicket(User u, List<Ticket> allTickets,
-        Map<String, Milestone> allMilestones) {
-        ArrayNode result = mapper.createArrayNode();
+    /**
+     * imi aduce istoricul unui tichet
+     */
+    public static ArrayNode getHistoryTicket(final User u, final List<Ticket> allTickets,
+        final Map<String, Milestone> allMilestones) {
+        ArrayNode result = MAPPER.createArrayNode();
 
         List<Ticket> visibleTickets = new ArrayList<>();
 
@@ -80,15 +87,15 @@ public class ViewTickets {
         if (u.getRole().equals("DEVELOPER")) {
             Developer dev = (Developer) u;
 
-            // tichete asignate + cele la care a renunțat
+            // tichete asignate + cele la care a renuntat
             visibleTickets.addAll(dev.getAssignedTckets());
             visibleTickets.addAll(dev.getPastAssigTickets());
         } else if (u.getRole().equals("MANAGER")) {
-            // managerul vede tichetele din milestone-urile lui
+            // managerul vede tichetele din milestoneurile lui
             for (Milestone mil :  allMilestones.values()) {
                 if (mil.getCreatorName().equals(u.getUsername())) {
                     // am un milestone facut de acest manager; iau toate ticketele din el
-                    for(Integer idTick : mil.getTickets()) {
+                    for (Integer idTick : mil.getTickets()) {
                         visibleTickets.add(allTickets.get(idTick));
                     }
                 }
@@ -101,14 +108,14 @@ public class ViewTickets {
 
         // dau cu afisarea
         for (Ticket t : visibleTickets) {
-            ObjectNode ticketNode = mapper.createObjectNode();
+            ObjectNode ticketNode = MAPPER.createObjectNode();
 
             ticketNode.put("id", t.getId());
             ticketNode.put("title", t.getTitle());
             ticketNode.put("status", t.getStatus());
 
             // actiunile acum
-            ArrayNode actionsArray = mapper.createArrayNode();
+            ArrayNode actionsArray = MAPPER.createArrayNode();
 
             for (HistoryOfTicket h : t.getHistory()) {
 
@@ -125,10 +132,10 @@ public class ViewTickets {
 
             ticketNode.set("actions", actionsArray);
 
-            ArrayNode commentsArray = mapper.createArrayNode();
+            ArrayNode commentsArray = MAPPER.createArrayNode();
             if (t.getComments() != null) {
                 t.getComments().forEach(c -> {
-                    ObjectNode cNode = mapper.createObjectNode();
+                    ObjectNode cNode = MAPPER.createObjectNode();
                     cNode.put("author", c.getAuthor());
                     cNode.put("content", c.getMessage());
                     cNode.put("createdAt", c.getCreatedAt());
@@ -144,8 +151,11 @@ public class ViewTickets {
         return result;
     }
 
-    private static ObjectNode ticketToJsonAssig(Ticket t) {
-        ObjectNode node = mapper.createObjectNode();
+    /**
+     * formatare ticket asignat
+     */
+    private static ObjectNode ticketToJsonAssig(final Ticket t) {
+        ObjectNode node = MAPPER.createObjectNode();
         node.put("id", t.getId());
         node.put("type", t.getType());
         node.put("title", t.getTitle());
@@ -155,11 +165,11 @@ public class ViewTickets {
         node.put("assignedAt", t.getAssignedAt());
         node.put("reportedBy", t.getReportedBy());
         //   node.putArray("comments"); // momentan gol
-        ArrayNode commentsArray = mapper.createArrayNode();
+        ArrayNode commentsArray = MAPPER.createArrayNode();
 
         if (t.getComments() != null) {
             for (tickets.Comment c : t.getComments()) {
-                ObjectNode commentNode = mapper.createObjectNode();
+                ObjectNode commentNode = MAPPER.createObjectNode();
                 commentNode.put("author", c.getAuthor());
                 commentNode.put("content", c.getMessage());
                 commentNode.put("createdAt", c.getCreatedAt());
@@ -171,8 +181,11 @@ public class ViewTickets {
         return node;
     }
 
-    private static ObjectNode historyToJson(HistoryOfTicket h) {
-        ObjectNode node = mapper.createObjectNode();
+    /**
+     * formatare output pt istoricul unui tichet
+     */
+    private static ObjectNode historyToJson(final HistoryOfTicket h) {
+        ObjectNode node = MAPPER.createObjectNode();
         if (h.getMilName() != null) {
             node.put("milestone", h.getMilName());
         }
@@ -188,8 +201,11 @@ public class ViewTickets {
         return node;
     }
 
-    private static ObjectNode ticketToJson(Ticket t) {
-        ObjectNode node = mapper.createObjectNode();
+    /**
+     * parsare tichet in json pentru a l pune in output
+     */
+    private static ObjectNode ticketToJson(final Ticket t) {
+        ObjectNode node = MAPPER.createObjectNode();
         node.put("id", t.getId());
         node.put("type", t.getType());
         node.put("title", t.getTitle());
@@ -201,11 +217,11 @@ public class ViewTickets {
         node.put("assignedTo", "");
         node.put("reportedBy", t.getReportedBy());
         // node.putArray("comments"); // momentan gol
-        ArrayNode commentsArray = mapper.createArrayNode();
+        ArrayNode commentsArray = MAPPER.createArrayNode();
 
         if (t.getComments() != null) {
             for (tickets.Comment c : t.getComments()) {
-                ObjectNode commentNode = mapper.createObjectNode();
+                ObjectNode commentNode = MAPPER.createObjectNode();
                 commentNode.put("author", c.getAuthor());
                 commentNode.put("content", c.getMessage());
                 commentNode.put("createdAt", c.getCreatedAt());
@@ -217,7 +233,10 @@ public class ViewTickets {
         return node;
     }
 
-    private static int priorityValue(String bussinesPriority) {
+    /**
+     * pentru cautarea dupa prioritate
+     */
+    private static int priorityValue(final String bussinesPriority) {
         switch (bussinesPriority) {
             case "CRITICAL": return 1;
             case "HIGH": return 2;

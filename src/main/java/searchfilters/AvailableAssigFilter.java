@@ -1,6 +1,6 @@
 package searchfilters;
 
-import main.Milestone;
+import milestones.Milestone;
 import tickets.Ticket;
 import users.Developer;
 

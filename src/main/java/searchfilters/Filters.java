@@ -1,7 +1,7 @@
 package searchfilters;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import main.Milestone;
+import milestones.Milestone;
 import users.Developer;
 
 import java.util.ArrayList;
@@ -10,9 +10,7 @@ import java.util.Map;
 
 public final class Filters {
 
-    private Filters() {
-
-    }
+    private Filters() { }
     /**
      * imi ia filtrele din json si le duce in filtre ca tip de date
      */
@@ -27,10 +25,12 @@ public final class Filters {
         }
         // aici mai trebuie performance
         if (filtersNode.has("performanceScoreBelow")) {
-            filters.add(new PerformanceFilter((filtersNode.get("performanceScoreBelow").asText()), -1));
+            filters.add(new PerformanceFilter((filtersNode.
+                    get("performanceScoreBelow").asText()), -1));
         }
         if (filtersNode.has("performanceScoreAbove")) {
-            filters.add(new PerformanceFilter((filtersNode.get("performanceScoreAbove").asText()), 1));
+            filters.add(new PerformanceFilter((filtersNode
+                    .get("performanceScoreAbove").asText()), 1));
         }
         return filters;
     }

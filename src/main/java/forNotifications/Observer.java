@@ -1,4 +1,4 @@
-package fornotifications;
+package forNotifications;
 
 public interface Observer {
     // asta e nucleu la toata gestionarea de notif

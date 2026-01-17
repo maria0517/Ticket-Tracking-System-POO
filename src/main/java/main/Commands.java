@@ -3,45 +3,46 @@ package main;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import searchfilters.FilterDev;
-import searchfilters.FilterTick;
-import searchfilters.SearchStrategyTick;
-import searchfilters.SearchStrtaegyDev;
-import tickets.BugTicket;
-import tickets.FeatureRequestTicket;
-import tickets.Ticket;
-import tickets.UIFeedbackTicket;
+import milestones.Milestone;
+import milestones.MilestoneGen;
+import searchfilters.*;
+import tickets.*;
 import users.Developer;
 import users.Manager;
 import users.User;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.util.*;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import static main.ViewTickets.*;
-import static main.viewAfterSearch.viewSearchedDevs;
-import static main.viewAfterSearch.viewSearchedTickets;
-import static main.viewNotifications.getNotifications;
+import static main.ViewTickets.getAssignedTickets;
+import static main.ViewTickets.getHistoryTicket;
+import static main.ViewTickets.getVisibleTickets;
+import static main.ViewNotifications.getNotifications;
 import static metrics.PerformanceReport.generatePerformanceReport;
 import static metrics.ReportOutputGenerator.reportFormat;
 import static metrics.ResolutionReportOutputGenerator.resolutionReportFormat;
-import static searchfilters.Filters.parseDEVFiltersFromJson;
-import static searchfilters.Filters.parseTICKFiltersFromJson;
-import static tickets.Comment.*;
-import static main.Milestone.updateMilestones;
-import static main.viewMilestones.viewGoodMilestones;
+import static tickets.Comment.validAddComm;
+import static tickets.Comment.addComment;
+import static tickets.Comment.undoAddComment;
+import static milestones.Milestone.updateMilestones;
+import static milestones.ViewMilestones.viewGoodMilestones;
 import static tickets.HistoryOfTicket.actualHist;
 import static tickets.Status.changingStatus;
 
 
 public class Commands {
+
+    public static final int TESTING_PER = 12;
+
     // lista pentru comm si mapper pentru formatare output
     private final List<JsonNode> commands;
     private final ObjectMapper mapper = new ObjectMapper();
 
     // constructorul
-    public Commands(List<JsonNode> commands) {
+    public Commands(final List<JsonNode> commands) {
         this.commands = commands;
     }
 
@@ -51,14 +52,15 @@ public class Commands {
     private final Map<String, Milestone> allMilestones = new HashMap<>();
 
     // data pentru a putea vedea perioada de testing
-    boolean firstComm = false;
+    private boolean firstComm = false;
     private String testPeriod = null;
     private String testPerEnd = null;
     // 12 zile pentru testare
 
-
-    // efectiv parcurgere comenzi si procesarea lor
-    public void prelucComm(List<ObjectNode> outputs, List<User> allUsers) {
+    /**
+     *  // efectiv parcurgere comenzi si procesarea lor
+     */
+    public void prelucComm(final List<ObjectNode> outputs, final List<User> allUsers) {
         // imi trebuie o lista de tickete si lista de utilizatori
         for (JsonNode cmd : commands) {
             String command = cmd.get("command").asText();
@@ -84,27 +86,24 @@ public class Commands {
                 testPeriod = timestamp;
                 // am timpul de start; trebuie cel de final
                 LocalDate start = LocalDate.parse(testPeriod);
-                testPerEnd = start.plusDays(12).toString();
+                testPerEnd = start.plusDays(TESTING_PER).toString();
             }
 
-            updateMilestones(allMilestones, timestamp, allTickets, command);
+            updateMilestones(allMilestones, timestamp, allTickets);
 
             if (command.equals("startTestingPhase")) {
                 // de la asta imi crapa 18
-                for (Milestone m : allMilestones.values()) {
-                    // daca e unul activ, trebuie respinsa comanda
-                    // nu fac asta momentan
-                }
                 // presupun ca este o comanda valida, care trebuie executata
                 // incep o noua perioada in care se pot raporta tichete
                 // resetez ce aveam initial
                 testPeriod = timestamp;
                 LocalDate start = LocalDate.parse(testPeriod);
-                testPerEnd = start.plusDays(12).toString();
+                testPerEnd = start.plusDays(TESTING_PER).toString();
             }
             // creare output; daca am
             if (command.equals("viewTickets")) {
-                resultNode.put("tickets", getVisibleTickets(util, new ArrayList<>(allTickets.values())));
+                resultNode.put("tickets", getVisibleTickets(util,
+                        new ArrayList<>(allTickets.values())));
                 outputs.add(resultNode);
             }
 
@@ -168,11 +167,11 @@ public class Commands {
                         // vad daca a fost facut cumva anonim ticketul ca nu e bine
                         if (!reportedBy.isEmpty()) {
                             // apel builder
-                            newTicket = new FeatureRequestTicket.Builder().setId(newId).setTitle(title)
-                                    .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
-                                    .setDescription(description).setReportedBy(reportedBy)
-                                    .setBusinessValue(businessValue).setCustomerDemand(customerDemand)
-                                    .setCreatedAt(timestamp).build();
+                            newTicket = new FeatureRequestTicket.Builder().setId(newId).
+                               setTitle(title).setBusinessPriority(businessPriority).
+                               setExpertiseArea(expertiseArea).setDescription(description)
+                               .setReportedBy(reportedBy).setBusinessValue(businessValue)
+                              .setCustomerDemand(customerDemand).setCreatedAt(timestamp).build();
                         } else {
                             // nu e raportat de nimeni; nu se poate
                             resultNode.put("error", "Anonymous reports are "
@@ -199,12 +198,12 @@ public class Commands {
                         }
 
                         newTicket = new BugTicket.Builder().setId(newId).setTitle(title)
-                                .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
-                                .setDescription(description).setReportedBy(reportedBy).
-                                setExpertiseArea(expertiseArea).setDescription(description).
-                                setExpectedBehavior(expectedBehavior).setActualBehavior(actualBehavior)
-                                .setFrequency(frequency).setSeverity(severity).setEnvironment(environment)
-                                .setCreatedAt(timestamp).setErrorCode(errorCode).build();
+                         .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
+                            .setDescription(description).setReportedBy(reportedBy).
+                            setExpertiseArea(expertiseArea).setDescription(description).
+                            setExpectedBehavior(expectedBehavior).setActualBehavior(actualBehavior)
+                          .setFrequency(frequency).setSeverity(severity).setEnvironment(environment)
+                            .setCreatedAt(timestamp).setErrorCode(errorCode).build();
 
                     } else if (ticketType.equals("UI_FEEDBACK")) {
                         String uiElementId = null;
@@ -212,7 +211,8 @@ public class Commands {
                             uiElementId = params.get("uiElementId").asText();
                         }
                         String businessValue =  params.get("businessValue").asText();
-                        int usabilityScore =   Integer.parseInt(params.get("usabilityScore").asText());
+                        int usabilityScore =   Integer.parseInt(params.get(
+                                "usabilityScore").asText());
                         // optionale
                         String screenshotUrl = null;
                         if (params.get("screenshotUrl") != null) {
@@ -226,12 +226,12 @@ public class Commands {
                         if (!reportedBy.isEmpty()) {
                             // apel builder
                             newTicket = new UIFeedbackTicket.Builder().setId(newId).setTitle(title)
-                                    .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
-                                    .setDescription(description).setReportedBy(reportedBy).
-                                    setExpertiseArea(expertiseArea).setDescription(description).
-                                    setUiElementId(uiElementId).setBusinessValue(businessValue)
-                                    .setUsabilityScore(usabilityScore).setScreenshotUrl(screenshotUrl)
-                                    .setSuggestedFix(suggestedFix).setCreatedAt(timestamp).build();;
+                             .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
+                                 .setDescription(description).setReportedBy(reportedBy).
+                                 setExpertiseArea(expertiseArea).setDescription(description).
+                                 setUiElementId(uiElementId).setBusinessValue(businessValue)
+                                 .setUsabilityScore(usabilityScore).setScreenshotUrl(screenshotUrl)
+                                 .setSuggestedFix(suggestedFix).setCreatedAt(timestamp).build();
                         } else {
                             // nu e raportat de nimeni; nu se poate
                             resultNode.put("error", "Anonymous reports are "
@@ -246,120 +246,9 @@ public class Commands {
                 }
             }
             if (command.equals("createMilestone")) {
-                // trebuie sa verific daca am trecut de perioada de testare
-                // nu mai trebuie ; se garanteaza din enunt ca nu se intampla
-
-                String name = cmd.get("name").asText();
-                String dueDate = cmd.get("dueDate").asText();
-                String numeCreator = cmd.get("username").asText();
-
-                // acum listele
-                // aici la tickete trebuie sa verific daca nu cumva au fost puse in alt milestone
-                List<Integer> ticketIds = new ArrayList<>();
-                boolean validIdTicket = true;
-                for (JsonNode idNode : cmd.get("tickets")) {
-                    if (validIdTicket) {
-                        List<Milestone> allMilestonesList = new ArrayList<>(allMilestones.values());
-                        for (Milestone unMil : allMilestonesList) {
-                            // il caut sa vad daca exista
-                            if (unMil.getTickets().contains(idNode.asInt())) {
-                                // il am deja in alta parte
-                                // dau mesaj de eroare si ies cu totul
-                                validIdTicket = false;
-                                resultNode.put("error", "Tickets " + idNode.asInt() + " already"
-                                        + " assigned" + " to milestone " + unMil.getName() + ".");
-                                outputs.add(resultNode);
-                            }
-                        }
-                        if (validIdTicket) {
-                            ticketIds.add(idNode.asInt());
-                            // setez pentru fiecare ticket din ce milestone face parte
-                            // startTestingPhase nu am asa ceva facut de aia nu merge
-                            allTickets.get(idNode.asInt()).setMilName(name);
-                            actualHist(allTickets.get(idNode.asInt()), username, timestamp, "createMilestone", "");
-                        }
-                    }
-                }
-                List<String> assignedDevs = new ArrayList<>();
-                for (JsonNode dev : cmd.get("assignedDevs")) {
-                    assignedDevs.add(dev.asText());
-                }
-
-                List<String> blockingFor = new ArrayList<>();
-                for (JsonNode m : cmd.get("blockingFor")) {
-                    blockingFor.add(m.asText());
-                }
-
-                // verificare id sa vad daca exista toate
-                for (int id : ticketIds) {
-                    if (!allTickets.containsKey(id)) {
-                        // mesaj de eroare
-                        break;
-                    }
-                }
-
-                // verif daca developeri alesi sunt din echipa managerului
-
-                Manager managMeu = null;
-                User altTip = null;
-
-                // caut mai intai managerul
-                for (User u : allUsers) {
-                    if (u.getUsername().equals(numeCreator) && util.getRole().equals("MANAGER")) {
-                        // am gasit manager
-                        managMeu = (Manager) u;
-                        break;
-                    } else if (u.getUsername().equals(numeCreator)) {
-                        // am altceva
-                        altTip = u;
-                        break;
-                    }
-                }
-                if (managMeu == null) {
-                    // nu este manager ce am eu acolo sau nu exista pur si simplu
-                    resultNode.put("error", "The user does not have permission to "
-                            + "execute this command: required role MANAGER; user role " + altTip.getRole() + ".");
-                    outputs.add(resultNode);
-                } else {
-
-                    // caut in lista lui de subordonati daca exista acel milestone
-                    for (String devUsername : assignedDevs) {
-                        if (!managMeu.getSubordinates().contains(devUsername)) {
-                            resultNode.put("error", "Developer " + devUsername +
-                                    " is not part of manager's team.");
-                            outputs.add(resultNode);
-                            break;
-                        }
-                    }
-                    // daca am trecut de toate astea sunt bine si creez milestone
-                    if (validIdTicket) {
-                        Milestone milestone = new Milestone(name, LocalDate.parse(dueDate), blockingFor, assignedDevs,
-                                ticketIds, timestamp, username);
-
-                        // acum am toti developeri valizi
-                        // marchez si in listele lor separate
-                        for (String devUsername : assignedDevs) {
-                            for (User u : allUsers) {
-                                if (u.getUsername().equals(devUsername)) {
-                                    // am un developer
-                                    Developer dev = (Developer) u;
-                                    dev.addMilName(name);
-                                    // trebuie sa i adaug si ca observeri
-                                    milestone.addObserver(dev);
-                                }
-                            }
-                        }
-
-                        // il pun cu toate milestoneurile
-                        allMilestones.put(name, milestone);
-                        // nu afisez nimic la succes
-                        // trebuie asta ca sa pot face mereu aceste verificari
-                        milestone.updateBlockState(new ArrayList<>(allMilestones.values()));
-                        // trebuie sa dau notificare
-                        milestone.notifyObservers("New milestone " + milestone.getName() +
-                            " has been created with due date " + milestone.getDueDate() + ".");
-                    }
-                }
+                // apelez direct functie din alta parte ca sa nu am aglomerat aici
+                MilestoneGen.createMilestone(cmd, allMilestones, allTickets,
+                  allUsers, resultNode, outputs, timestamp, username, util);
             }
 
             if (command.equals("viewMilestones")) {
@@ -383,7 +272,8 @@ public class Commands {
                     allTickets.get(ticketId).setAssignedtTo(devToAssig.getUsername());
                     allTickets.get(ticketId).setStatus("IN_PROGRESS");
                     actualHist(unTick, username, timestamp, "assignTicket", "");
-                    actualHist(allTickets.get(ticketId), username, timestamp, "changeStatus", "OPEN");
+                    actualHist(allTickets.get(ticketId), username,
+                            timestamp, "changeStatus", "OPEN");
 
                 } else {
                     resultNode.put("error",
@@ -418,8 +308,8 @@ public class Commands {
                 // nu am tratat cazul in care e manager!!!!!
                 // de acolo crapa
                 if (util.getRole().equals("DEVELOPER")) {
-                    resultNode.put("assignedTickets", getAssignedTickets((Developer) util,
-                            ((Developer) util).getAssignedTckets()));
+                    resultNode.put("assignedTickets",
+                            getAssignedTickets(((Developer) util).getAssignedTckets()));
                 }
                 outputs.add(resultNode);
             }
@@ -431,7 +321,8 @@ public class Commands {
                 if (validAddComm(util, allTickets.get(ticketID), comment).equals("valid")) {
                     // e ok fac adaugarea
                     addComment(util, allTickets.get(ticketID), comment, timestamp);
-                } else if (!validAddComm(util, allTickets.get(ticketID), comment).equals("ignore")) {
+                } else if (!validAddComm(util, allTickets.get(ticketID),
+                        comment).equals("ignore")) {
                     // ii dau cu eroare
                     resultNode.put("error", validAddComm(util, allTickets.get(ticketID), comment));
                     outputs.add(resultNode);
@@ -461,16 +352,20 @@ public class Commands {
                     if (!allTickets.get(ticketID).getStatus()
                             .equals("CLOSED") && command.equals("changeStatus")) {
                         // modific status ticket cu +1
-                        result = changingStatus((Developer) util, timestamp, allMilestones, allTickets.get(ticketID), 1);
+                        result = changingStatus((Developer) util, timestamp,
+                                allMilestones, allTickets.get(ticketID), 1);
                         // adaug in istoric
-                        actualHist(allTickets.get(ticketID), username, timestamp, "changeStatus", oldStatus);
+                        actualHist(allTickets.get(ticketID), username,
+                                timestamp, "changeStatus", oldStatus);
                     }
                     // caz particular aici am eroare cand este ticketul IN_PROCESS
                     if (!allTickets.get(ticketID).getStatus().equals("IN_PROGRESS")
                             && command.equals("undoChangeStatus")) {
                         // ma duc inapoi cu 1 status ticket
-                        result = changingStatus((Developer) util, timestamp, allMilestones, allTickets.get(ticketID), 2);
-                        actualHist(allTickets.get(ticketID), username, timestamp, "undoChangeStatus", oldStatus);
+                        result = changingStatus((Developer) util, timestamp,
+                                allMilestones, allTickets.get(ticketID), 2);
+                        actualHist(allTickets.get(ticketID), username,
+                                timestamp, "undoChangeStatus", oldStatus);
                     }
                 }
                 if (result != null && result.equals("naspa")) {
@@ -490,64 +385,9 @@ public class Commands {
             }
             if (command.equals("search")) {
                 // toate filtrele cu care lucrez mai departe
-                JsonNode filtersNode = cmd.get("filters");
-                resultNode.put("searchType", filtersNode.get("searchType").asText());
-                if (util.getRole().equals("MANAGER")) {
-                    // aici trebuie sa vad ce vrea sa caute; dev sau tichete
-                    Manager man = (Manager) util;
-                    String searchType = cmd.get("filters").get("searchType").asText();
-                    if (searchType.equals("DEVELOPER")) {
-                        // trebuie sa caut dev (toti din subordinea lui)
-                        List<FilterDev> filters = parseDEVFiltersFromJson(filtersNode);
-                        // acum trebuie sa iau developerii din echipa amicului
-                        // ca eu i am pus ca si stringuri cu numele ((
-                        List<Developer> devsToSearch = new ArrayList<>();
-                        for (String nume : man.getSubordinates()) {
-                            for (User u : allUsers) {
-                                if (u.getUsername().equals(nume)) {
-                                    // am gasit un developer
-                                    devsToSearch.add((Developer) u);
-                                }
-                            }
-                        }
-                        // acum am tot ce imi trebuie -> fac cautarea
-                        List<Developer> devsDone = new SearchStrtaegyDev(filters).search(devsToSearch);
-                        // ipotetic gata -> afisarea dupa
-                        devsDone.sort(Comparator.comparing(Developer::getUsername));
-                        resultNode.put("results", viewSearchedDevs(devsDone));
-                    } else {
-                        // tichete; toate din sistem
-                        // mai intai iau filtrele
-                        List <FilterTick> filters = parseTICKFiltersFromJson(filtersNode, null , allMilestones);
-                        List <Ticket> tickDone = new SearchStrategyTick(filters).
-                              search(new ArrayList<>(allTickets.values()));
-                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode, true));
-                    }
-                } else {
-                    // am un developer si cauta doar tichete
-                    // open din toate milestoneurile din crae face parte
-                    Developer dev = (Developer) util;
-                    List<Ticket> tickToSearch = new ArrayList<>();
-                    for (String milName : dev.getMilName()) {
-                        for (Integer id : allMilestones.get(milName).getTickets()) {
-                            // din toate cele ale milestoneului, doar cele deschise
-                            if (allTickets.get(id).getStatus().equals("OPEN")) {
-                                tickToSearch.add(allTickets.get(id));
-                            }
-                        }
-                    }
-                    // acum am toate tichetele cred eu
-                    List <FilterTick> filters = parseTICKFiltersFromJson(filtersNode, (Developer) util, allMilestones);
-                    if (filters.size() == 0) {
-                        // nu am niciun filtru, il tratez ca pe viewTickets
-                        resultNode.put("results",
-                                viewSearchedTickets(new ArrayList<>(allTickets.values()), filtersNode, false));
-                    } else {
-                        List<Ticket> tickDone = new SearchStrategyTick(filters).search(tickToSearch);
-                        resultNode.put("results", viewSearchedTickets(tickDone, filtersNode, false));
-                    }
-                }
-                outputs.add(resultNode);
+                // le am mutat in alta parte
+                outputs.add(SearchSelector.performSearch(cmd, util,
+                        allUsers, allTickets, allMilestones));
             }
             if (command.equals("viewNotifications")) {
                 // doar pentru developer
@@ -559,12 +399,8 @@ public class Commands {
                     || command.equals("generateTicketRiskReport")) {
                 // trebuie mai intai sa mi fac lista cu toate
                 // ticketele pe care le folosesc in raport
-                List<Ticket> ticksForReport = new ArrayList<>();
-                for (Ticket t : allTickets.values()) {
-                    if (t.getStatus().equals("OPEN") || t.getStatus().equals("IN_PROGRESS")) {
-                        ticksForReport.add(t);
-                    }
-                }
+                List<Ticket> ticksForReport = GeneratorTicketForRep.selectTickets(command,
+                        allTickets, timestamp);
                 // am ticketele apelez direct
                 // fac in functia de format distinctia intre cele doua
                 // tipuri de rapoarte
@@ -572,61 +408,28 @@ public class Commands {
                 outputs.add(resultNode);
             }
             if (command.equals("generateResolutionEfficiencyReport")) {
-                // aici trebuie luate doar cele closed sau resolved
-                List<Ticket> ticksForReport = new ArrayList<>();
-                for (Ticket t : allTickets.values()) {
-                    if (t.getStatus().equals("CLOSED") || t.getStatus().equals("RESOLVED")) {
-                        ticksForReport.add(t);
-                    }
-                }
+                List<Ticket> ticksForReport = GeneratorTicketForRep.selectTickets(command,
+                        allTickets, timestamp);
                 resultNode.put("report", resolutionReportFormat(ticksForReport));
                 outputs.add(resultNode);
             }
             if (command.equals("appStabilityReport")) {
                 // aici e oleaca de scris
-                List<Ticket> ticksForReport = new ArrayList<>();
-                for (Ticket t : allTickets.values()) {
-                    if (t.getStatus().equals("OPEN") || t.getStatus().equals("IN_PROGRESS")) {
-                        ticksForReport.add(t);
-                    }
-                }
-                if (ticksForReport.size() == 0) {
-                    // app este stabila, dar nu stiu momentan cum trebuie facuta asta
-                }
+                List<Ticket> ticksForReport = GeneratorTicketForRep.selectTickets(command,
+                        allTickets, timestamp);
                 resultNode.put("report", reportFormat(ticksForReport, command));
                 outputs.add(resultNode);
             }
             if (command.equals("generatePerformanceReport")) {
-                List<Ticket> ticksForReport = new ArrayList<>();
-                LocalDate commandDate = LocalDate.parse(timestamp);
-                // calculez luna anterioara
-                YearMonth previousMonth = YearMonth.from(commandDate).minusMonths(1);
-                for (Ticket t : allTickets.values()) {
-                    if (t.getStatus().equals("CLOSED")) {
-                        // trebuie luate doar cele din luna anterioara
-                        // calculez luna la care s a finalizat tichetul
-                        YearMonth solvedMonth = YearMonth.from(LocalDate.parse(t.getSolvedAt()));
-                        if (solvedMonth.equals(previousMonth)) {
-                            // ticket valid
-                            ticksForReport.add(t);
-                        }
-                    }
-                }
-                Manager manag = null;
-                for (User u : allUsers) {
-                    if (u.getUsername().equals(username)) {
-                        manag = (Manager) u;
-                    }
-                }
-
+                List<Ticket> ticksForReport = GeneratorTicketForRep.selectTickets(command,
+                        allTickets, timestamp);
                 // apelez direct functia de afisare
                 // generatePerformanceReport
                 resultNode.put("report",
-                        generatePerformanceReport(ticksForReport, allUsers, manag));
+                        generatePerformanceReport(ticksForReport, allUsers, (Manager) util));
                 // ipotetic e bine
                 outputs.add(resultNode);
             }
         }
-
     }
 }

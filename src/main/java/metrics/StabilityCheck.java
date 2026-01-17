@@ -1,10 +1,15 @@
 package metrics;
 
-public class StabilityCheck {
+public final class StabilityCheck {
+
+    private StabilityCheck() { }
 
     public static final double MAX_SCORE_STABLE = 50.0;
 
-    public static String stabilityTest (final double scorBugImp, final double scorReqImp,
+    /**
+     * @return daca app este stabila sau nu
+     */
+    public static String stabilityTest(final double scorBugImp, final double scorReqImp,
           final double scorUIFeedImp, final String bugRisk, final String reqRisk,
            final String uiFeedRisk) {
         // return "hello";
