@@ -110,145 +110,13 @@ public class Commands {
             // trebuie sa fac logica de validare tickete in functie de perioada testare
             // aici incep sa vad ce tip de comanda am
             if (command.equals("reportTicket")) {
-                // aici verific daca nu cumva ticketul nu mai este in perioada de testare
-                LocalDate ticketDate = LocalDate.parse(timestamp);
-                LocalDate start = LocalDate.parse(testPeriod);
-                LocalDate end = LocalDate.parse(testPerEnd);
-
-                // verific daca nu am trecut
-                if (ticketDate.isAfter(end)) {
-                    resultNode.put("error", "Tickets can only be reported during testing phases.");
-                    outputs.add(resultNode);
-                    continue; // nu mai creez ticketul
-                }
-
-                // trebuie creat un ticket de un anumit tip
-                // nu returnez nimic; doar erori
-                // o eroare -> userul care a facut ticketul nu exista
-                User reporter = null;
-                boolean exista = false;
-                for (User user : allUsers) {
-                    // verific daca exista
-                    if (user.getUsername().equals(username)) {
-                        // exista ii dau cu true si ies de aici
-                        reporter = user;
-                        exista = true;
-                        break;
-                    }
-                }
-                if (!exista) {
-                    // nu am userul; dau eroare
-                    resultNode.put("error", "The user " + username + " does not exist.");
-                    outputs.add(resultNode);
-                }
-                if (exista) {
-                    // trebuie creat ticketul
-                    String ticketType = params.get("type").asText();
-                    String title = params.get("title").asText();
-                    String businessPriority = params.get("businessPriority").asText();
-                    String expertiseArea = params.get("expertiseArea").asText();
-                    String description = null; //presupun ca nu am
-                    if (params.get("description") != null) {
-                        description = params.get("description").asText();
-                    }
-                    String reportedBy = null;
-                    if (params.get("reportedBy") != null) {
-                        reportedBy = params.get("reportedBy").asText();
-                    }
-
-                    Ticket newTicket = null;
-
-                    int newId = allTickets.size();
-
-                    if (ticketType.equals("FEATURE_REQUEST")) {
-                        // specifice
-                        String businessValue = params.get("businessValue").asText();
-                        String customerDemand = params.get("customerDemand").asText();
-                        // vad daca a fost facut cumva anonim ticketul ca nu e bine
-                        if (!reportedBy.isEmpty()) {
-                            // apel builder
-                            newTicket = new FeatureRequestTicket.Builder().setId(newId).
-                               setTitle(title).setBusinessPriority(businessPriority).
-                               setExpertiseArea(expertiseArea).setDescription(description)
-                               .setReportedBy(reportedBy).setBusinessValue(businessValue)
-                              .setCustomerDemand(customerDemand).setCreatedAt(timestamp).build();
-                        } else {
-                            // nu e raportat de nimeni; nu se poate
-                            resultNode.put("error", "Anonymous reports are "
-                                    + "only allowed for tickets of type BUG.");
-                            outputs.add(resultNode);
-                        }
-                    } else if (ticketType.equals("BUG")) {
-                        // cele specifice
-                        String expectedBehavior = params.get("expectedBehavior").asText();
-                        String actualBehavior =  params.get("actualBehavior").asText();
-                        String frequency =  params.get("frequency").asText();
-                        String severity = params.get("severity").asText();
-                        String environment = null;
-                        if (params.get("enviroment") != null) {
-                            environment = params.get("enviroment").asText();
-                        }
-                        Integer errorCode = null;
-                        if (params.get("errorCode") != null) {
-                            errorCode = Integer.parseInt(params.get("errorCode").asText());
-                        }
-                        // daca am ticket anonim, prioritate e LOW
-                        if (reportedBy.isEmpty()) {
-                            businessPriority = "LOW";
-                        }
-
-                        newTicket = new BugTicket.Builder().setId(newId).setTitle(title)
-                         .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
-                            .setDescription(description).setReportedBy(reportedBy).
-                            setExpertiseArea(expertiseArea).setDescription(description).
-                            setExpectedBehavior(expectedBehavior).setActualBehavior(actualBehavior)
-                          .setFrequency(frequency).setSeverity(severity).setEnvironment(environment)
-                            .setCreatedAt(timestamp).setErrorCode(errorCode).build();
-
-                    } else if (ticketType.equals("UI_FEEDBACK")) {
-                        String uiElementId = null;
-                        if (params.get("uiElementId") != null) {
-                            uiElementId = params.get("uiElementId").asText();
-                        }
-                        String businessValue =  params.get("businessValue").asText();
-                        int usabilityScore =   Integer.parseInt(params.get(
-                                "usabilityScore").asText());
-                        // optionale
-                        String screenshotUrl = null;
-                        if (params.get("screenshotUrl") != null) {
-                            screenshotUrl = params.get("screenshotUrl").asText();
-                        }
-                        String suggestedFix = null;
-                        if (params.get("suggestedFix") != null) {
-                            suggestedFix = params.get("suggestedFix").asText();
-                        }
-
-                        if (!reportedBy.isEmpty()) {
-                            // apel builder
-                            newTicket = new UIFeedbackTicket.Builder().setId(newId).setTitle(title)
-                             .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
-                                 .setDescription(description).setReportedBy(reportedBy).
-                                 setExpertiseArea(expertiseArea).setDescription(description).
-                                 setUiElementId(uiElementId).setBusinessValue(businessValue)
-                                 .setUsabilityScore(usabilityScore).setScreenshotUrl(screenshotUrl)
-                                 .setSuggestedFix(suggestedFix).setCreatedAt(timestamp).build();
-                        } else {
-                            // nu e raportat de nimeni; nu se poate
-                            resultNode.put("error", "Anonymous reports are "
-                                    + "only allowed for tickets of type BUG.");
-                            outputs.add(resultNode);
-                        }
-                    }
-                    // adaug daca exista ceva
-                    if (newTicket != null) {
-                        allTickets.put(newId, newTicket);
-                    }
-                }
+                // am mutat mai jos toata jucaria
+                createTick(username, timestamp, params, allUsers, resultNode, outputs, testPerEnd);
             }
             if (command.equals("createMilestone")) {
                 // apelez direct functie din alta parte ca sa nu am aglomerat aici
                 MilestoneGen.createMilestone(cmd, allMilestones, allTickets,
-                  allUsers, resultNode, outputs, timestamp, username, util);
+                        allUsers, resultNode, outputs, timestamp, username, util);
             }
 
             if (command.equals("viewMilestones")) {
@@ -277,7 +145,7 @@ public class Commands {
 
                 } else {
                     resultNode.put("error",
-                        devToAssig.validAssigment(unTick, allMilestones));
+                            devToAssig.validAssigment(unTick, allMilestones));
                     outputs.add(resultNode);
                 }
             }
@@ -371,7 +239,7 @@ public class Commands {
                 if (result != null && result.equals("naspa")) {
                     // eroare
                     resultNode.put("error", "Ticket " + ticketID + " is not "
-                         + "assigned to developer " + username + ".");
+                            + "assigned to developer " + username + ".");
                     outputs.add(resultNode);
                 }
             }
@@ -380,7 +248,8 @@ public class Commands {
                 // daca ii da deassign trebuie retinut in alta parte ca a avut acel
                 // ticket ca sa i pot vizualiza istoricul
                 resultNode.put("ticketHistory",
-                    getHistoryTicket(util, new ArrayList<>(allTickets.values()), allMilestones));
+                        getHistoryTicket(util,
+                                new ArrayList<>(allTickets.values()), allMilestones));
                 outputs.add(resultNode);
             }
             if (command.equals("search")) {
@@ -429,6 +298,148 @@ public class Commands {
                         generatePerformanceReport(ticksForReport, allUsers, (Manager) util));
                 // ipotetic e bine
                 outputs.add(resultNode);
+            }
+        }
+    }
+
+    public void createTick(final String username, final String timestamp,
+         final JsonNode params, final List<User> allUsers, final ObjectNode resultNode,
+         final List<ObjectNode> outputs,  final String testPerEnd) {
+        // aici verific daca nu cumva ticketul nu mai este in perioada de testare
+        LocalDate ticketDate = LocalDate.parse(timestamp);
+        LocalDate end = LocalDate.parse(testPerEnd);
+
+        // verific daca nu am trecut
+        if (ticketDate.isAfter(end)) {
+            resultNode.put("error", "Tickets can only"
+                    + " be reported during testing phases.");
+            outputs.add(resultNode);
+            return; // nu mai creez ticketul
+        }
+
+        // trebuie creat un ticket de un anumit tip
+        // nu returnez nimic; doar erori
+        // o eroare -> userul care a facut ticketul nu exista
+        User reporter = null;
+        boolean exista = false;
+        for (User user : allUsers) {
+            // verific daca exista
+            if (user.getUsername().equals(username)) {
+                // exista ii dau cu true si ies de aici
+                reporter = user;
+                exista = true;
+                break;
+            }
+        }
+        if (!exista) {
+            // nu am userul; dau eroare
+            resultNode.put("error", "The user " + username + " does not exist.");
+            outputs.add(resultNode);
+            return;
+        }
+        if (exista) {
+            // trebuie creat ticketul
+            String ticketType = params.get("type").asText();
+            String title = params.get("title").asText();
+            String businessPriority = params.get("businessPriority").asText();
+            String expertiseArea = params.get("expertiseArea").asText();
+            String description = null; //presupun ca nu am
+            if (params.get("description") != null) {
+                description = params.get("description").asText();
+            }
+            String reportedBy = null;
+            if (params.get("reportedBy") != null) {
+                reportedBy = params.get("reportedBy").asText();
+            }
+
+            Ticket newTicket = null;
+
+            int newId = allTickets.size();
+
+            if (ticketType.equals("FEATURE_REQUEST")) {
+                // specifice
+                String businessValue = params.get("businessValue").asText();
+                String customerDemand = params.get("customerDemand").asText();
+                // vad daca a fost facut cumva anonim ticketul ca nu e bine
+                if (!reportedBy.isEmpty()) {
+                    // apel builder
+                    newTicket = new FeatureRequestTicket.Builder().setId(newId).
+                            setTitle(title).setBusinessPriority(businessPriority).
+                            setExpertiseArea(expertiseArea).setDescription(description)
+                            .setReportedBy(reportedBy).setBusinessValue(businessValue)
+                            .setCustomerDemand(customerDemand).setCreatedAt(timestamp).build();
+                } else {
+                    // nu e raportat de nimeni; nu se poate
+                    resultNode.put("error", "Anonymous reports are "
+                            + "only allowed for tickets of type BUG.");
+                    outputs.add(resultNode);
+                    return;
+                }
+            } else if (ticketType.equals("BUG")) {
+                // cele specifice
+                String expectedBehavior = params.get("expectedBehavior").asText();
+                String actualBehavior =  params.get("actualBehavior").asText();
+                String frequency =  params.get("frequency").asText();
+                String severity = params.get("severity").asText();
+                String environment = null;
+                if (params.get("enviroment") != null) {
+                    environment = params.get("enviroment").asText();
+                }
+                Integer errorCode = null;
+                if (params.get("errorCode") != null) {
+                    errorCode = Integer.parseInt(params.get("errorCode").asText());
+                }
+                // daca am ticket anonim, prioritate e LOW
+                if (reportedBy.isEmpty()) {
+                    businessPriority = "LOW";
+                }
+
+                newTicket = new BugTicket.Builder().setId(newId).setTitle(title)
+                        .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
+                        .setDescription(description).setReportedBy(reportedBy).
+                        setExpertiseArea(expertiseArea).setDescription(description).
+                        setExpectedBehavior(expectedBehavior).setActualBehavior(actualBehavior)
+                        .setFrequency(frequency).setSeverity(severity).setEnvironment(environment)
+                        .setCreatedAt(timestamp).setErrorCode(errorCode).build();
+
+            } else if (ticketType.equals("UI_FEEDBACK")) {
+                String uiElementId = null;
+                if (params.get("uiElementId") != null) {
+                    uiElementId = params.get("uiElementId").asText();
+                }
+                String businessValue =  params.get("businessValue").asText();
+                int usabilityScore =   Integer.parseInt(params.get(
+                        "usabilityScore").asText());
+                // optionale
+                String screenshotUrl = null;
+                if (params.get("screenshotUrl") != null) {
+                    screenshotUrl = params.get("screenshotUrl").asText();
+                }
+                String suggestedFix = null;
+                if (params.get("suggestedFix") != null) {
+                    suggestedFix = params.get("suggestedFix").asText();
+                }
+
+                if (!reportedBy.isEmpty()) {
+                    // apel builder
+                    newTicket = new UIFeedbackTicket.Builder().setId(newId).setTitle(title)
+                            .setBusinessPriority(businessPriority).setExpertiseArea(expertiseArea)
+                            .setDescription(description).setReportedBy(reportedBy).
+                            setExpertiseArea(expertiseArea).setDescription(description).
+                            setUiElementId(uiElementId).setBusinessValue(businessValue)
+                            .setUsabilityScore(usabilityScore).setScreenshotUrl(screenshotUrl)
+                            .setSuggestedFix(suggestedFix).setCreatedAt(timestamp).build();
+                } else {
+                    // nu e raportat de nimeni; nu se poate
+                    resultNode.put("error", "Anonymous reports are "
+                            + "only allowed for tickets of type BUG.");
+                    outputs.add(resultNode);
+                    return;
+                }
+            }
+            // adaug daca exista ceva
+            if (newTicket != null) {
+                allTickets.put(newId, newTicket);
             }
         }
     }
